@@ -17,7 +17,10 @@ export function ConversationItem({
   const lastMessageText = conversation.last_message_text
   const contactName = conversation.contact_name || conversation.phone_number
   const lastMessageAt = conversation.last_message_at
-    ? new Date(conversation.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ? new Date(conversation.last_message_at).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     : ''
 
   return (
@@ -29,10 +32,11 @@ export function ConversationItem({
       )}
     >
       <Avatar className="h-12 w-12">
-        <AvatarImage src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`} alt={contactName} />
-        <AvatarFallback>
-          {contactName.substring(0, 2)}
-        </AvatarFallback>
+        <AvatarImage
+          src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`}
+          alt={contactName}
+        />
+        <AvatarFallback>{contactName.substring(0, 2)}</AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">

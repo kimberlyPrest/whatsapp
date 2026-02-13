@@ -56,7 +56,9 @@ export function ChatWindow({
     setIsSending(false)
 
     if (conversation?.phone_number) {
-      whatsappService.getAISuggestion(conversation.phone_number).then(setSuggestion)
+      whatsappService
+        .getAISuggestion(conversation.phone_number)
+        .then(setSuggestion)
     }
   }, [conversation?.phone_number])
 
@@ -71,24 +73,31 @@ export function ChatWindow({
     if (inputText.trim() && conversation) {
       setIsSending(true)
       try {
-        // Se houver uma sugestão pendente e o texto for enviado (mesmo que editado), 
+        // Se houver uma sugestão pendente e o texto for enviado (mesmo que editado),
         // usamos a Edge Function para marcar como resolvida
-        let sentMessage;
+        let sentMessage
         if (suggestion) {
           sentMessage = await whatsappService.sendFinalMessage(
             conversation.phone_number,
             inputText,
-            suggestion.id
+            suggestion.id,
           )
         } else {
-          sentMessage = await whatsappService.sendMessage(conversation.phone_number, inputText)
+          sentMessage = await whatsappService.sendMessage(
+            conversation.phone_number,
+            inputText,
+          )
         }
 
         onMessageSent?.(sentMessage)
         setInputText('')
         setSuggestion(null)
       } catch (error) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao enviar mensagem' })
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Erro ao enviar mensagem',
+        })
       } finally {
         setIsSending(false)
       }
@@ -109,13 +118,17 @@ export function ChatWindow({
         const sentMessage = await whatsappService.approveSuggestion(
           suggestion.id,
           conversation.phone_number,
-          suggestion.suggestion_text
+          suggestion.suggestion_text,
         )
         onMessageSent?.(sentMessage)
         setShowSuggestion(false)
         setSuggestion(null)
       } catch (error) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao aprovar sugestão' })
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Erro ao aprovar sugestão',
+        })
       } finally {
         setIsSending(false)
       }
@@ -137,7 +150,8 @@ export function ChatWindow({
             WhatsApp para Operadores
           </h1>
           <p className="text-[#667781] text-sm leading-6">
-            Atendimento inteligente com suporte de IA.<br />
+            Atendimento inteligente com suporte de IA.
+            <br />
             Gerencie suas conversas e aprove as sugestões com facilidade.
           </p>
         </div>
@@ -162,10 +176,10 @@ export function ChatWindow({
           </Button>
 
           <Avatar className="cursor-pointer">
-            <AvatarImage src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`} />
-            <AvatarFallback>
-              {contactName.substring(0, 2)}
-            </AvatarFallback>
+            <AvatarImage
+              src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`}
+            />
+            <AvatarFallback>{contactName.substring(0, 2)}</AvatarFallback>
           </Avatar>
 
           <div className="flex flex-col">
@@ -177,7 +191,9 @@ export function ChatWindow({
                 className={cn(
                   'text-[9px] text-white px-1.5 py-0 h-3.5 font-normal uppercase tracking-wide border-0',
                 )}
-                style={{ backgroundColor: conversation.status_color || '#6B7280' }}
+                style={{
+                  backgroundColor: conversation.status_color || '#6B7280',
+                }}
               >
                 {conversation.status?.replace('_', ' ')}
               </Badge>
@@ -275,7 +291,7 @@ export function ChatWindow({
           <div className="flex-1 bg-white rounded-lg min-h-[42px] flex items-center px-4 py-2 shadow-sm mb-1">
             <input
               className="w-full bg-transparent border-none outline-none text-[#111B21] text-[15px] placeholder:text-[#54656F]"
-              placeholder={isSending ? "Enviando..." : "Mensagem"}
+              placeholder={isSending ? 'Enviando...' : 'Mensagem'}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -289,13 +305,15 @@ export function ChatWindow({
                 onClick={handleSendMessage}
                 size="icon"
                 className={cn(
-                  "rounded-full bg-[#25D366] hover:bg-[#1fb355] h-10 w-10 shrink-0 transition-all",
-                  isSending && "w-auto px-4"
+                  'rounded-full bg-[#25D366] hover:bg-[#1fb355] h-10 w-10 shrink-0 transition-all',
+                  isSending && 'w-auto px-4',
                 )}
                 disabled={isSending}
               >
                 {isSending ? (
-                  <span className="text-xs text-white font-medium animate-pulse">Enviando...</span>
+                  <span className="text-xs text-white font-medium animate-pulse">
+                    Enviando...
+                  </span>
                 ) : (
                   <Send className="w-5 h-5 text-white ml-0.5" />
                 )}

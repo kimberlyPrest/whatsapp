@@ -1,7 +1,12 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
-import { User, MessageCircle, LayoutDashboard, BrainCircuit } from 'lucide-react'
+import {
+  User,
+  MessageCircle,
+  LayoutDashboard,
+  BrainCircuit,
+} from 'lucide-react'
 
 const Layout = () => {
   const { user, signOut } = useAuth()
@@ -24,7 +29,9 @@ const Layout = () => {
             <div className="bg-[#25D366] p-1.5 rounded-lg group-hover:bg-[#1fb355] transition-colors">
               <MessageCircle className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-[#111B21] hidden sm:inline-block">WhatsApp Sugestão</span>
+            <span className="text-xl font-bold text-[#111B21] hidden sm:inline-block">
+              WhatsApp Sugestão
+            </span>
           </div>
 
           <nav className="flex items-center gap-2">

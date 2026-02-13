@@ -34,8 +34,10 @@ const App = () => (
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} /> {/* Modified / route to redirect to /dashboard */}
-              <Route path="/dashboard" element={<Dashboard />} /> {/* Added Dashboard route */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />{' '}
+              {/* Modified / route to redirect to /dashboard */}
+              <Route path="/dashboard" element={<Dashboard />} />{' '}
+              {/* Added Dashboard route */}
               <Route path="/whatsapp" element={<WhatsApp />} />
             </Route>
           </Route>

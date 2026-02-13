@@ -12,7 +12,7 @@ export default function WhatsApp() {
   const [conversations, setConversations] = useState<any[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedId, setSelectedId] = useState<string | undefined>(
-    location.state?.selectedId
+    location.state?.selectedId,
   )
   const [statusFilter, setStatusFilter] = useState<string>('Todas')
   const [searchTerm, setSearchTerm] = useState('')
@@ -26,7 +26,11 @@ export default function WhatsApp() {
       const data = await whatsappService.getConversations()
       setConversations(data)
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao carregar conversas' })
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao carregar conversas',
+      })
     } finally {
       setLoading(false)
     }
@@ -44,7 +48,11 @@ export default function WhatsApp() {
           const data = await whatsappService.getMessages(selectedId)
           setMessages(data)
         } catch (error) {
-          toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao carregar mensagens' })
+          toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'Erro ao carregar mensagens',
+          })
         }
       }
       loadMessages()
@@ -65,7 +73,11 @@ export default function WhatsApp() {
       setMessages((prev) => [...prev, newMessage])
       loadConversations() // Refresh list
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao enviar mensagem' })
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao enviar mensagem',
+      })
     }
   }
 
@@ -76,7 +88,11 @@ export default function WhatsApp() {
       toast({ title: 'Sucesso', description: 'Conversa finalizada' })
       loadConversations()
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao finalizar conversa' })
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao finalizar conversa',
+      })
     }
   }
 
@@ -87,7 +103,11 @@ export default function WhatsApp() {
       toast({ title: 'Sucesso', description: 'Conversa reaberta' })
       loadConversations()
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao reabrir conversa' })
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao reabrir conversa',
+      })
     }
   }
 
@@ -107,7 +127,9 @@ export default function WhatsApp() {
     loadConversations() // Refresh sidebar counts and last message
   }
 
-  const selectedConversation = conversations.find((c) => c.phone_number === selectedId)
+  const selectedConversation = conversations.find(
+    (c) => c.phone_number === selectedId,
+  )
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F0F2F5] relative">
@@ -126,7 +148,9 @@ export default function WhatsApp() {
           setSearchTerm={setSearchTerm}
         />
 
-        <div className={cn('flex-1 h-full', isMobile && !selectedId && 'hidden')}>
+        <div
+          className={cn('flex-1 h-full', isMobile && !selectedId && 'hidden')}
+        >
           <ChatWindow
             conversation={selectedConversation}
             messages={messages}
