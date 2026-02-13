@@ -1,132 +1,120 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/whatsapp/Sidebar'
 import { ChatWindow } from '@/components/whatsapp/ChatWindow'
-import {
-  conversations as initialConversations,
-  Conversation,
-  ConversationStatus,
-  Message,
-} from '@/data/mockData'
+import { whatsappService, Conversation, Message } from '@/lib/services/whatsapp'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
 export default function WhatsApp() {
-  const [conversations, setConversations] =
-    useState<Conversation[]>(initialConversations)
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
-  const [statusFilter, setStatusFilter] = useState<
-    ConversationStatus | 'Todas'
-  >('Todas')
+  const location = useLocation()
+  const [conversations, setConversations] = useState<any[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
+  const [selectedId, setSelectedId] = useState<string | undefined>(
+    location.state?.selectedId
+  )
+  const [statusFilter, setStatusFilter] = useState<string>('Todas')
   const [searchTerm, setSearchTerm] = useState('')
+  const [loading, setLoading] = useState(true)
   const isMobile = useIsMobile()
   const { toast } = useToast()
 
-  const handleSelectConversation = (id: string) => {
-    setSelectedId(id)
-
-    // Mark messages as read when opening (mock logic)
-    setConversations((prev) =>
-      prev.map((conv) => {
-        if (conv.id === id) {
-          return {
-            ...conv,
-            unreadCount: 0,
-            messages: conv.messages.map((msg) =>
-              msg.sender === 'them' ? { ...msg, status: 'read' as const } : msg,
-            ),
-          }
-        }
-        return conv
-      }),
-    )
+  // Fetch conversations
+  const loadConversations = async () => {
+    try {
+      const data = await whatsappService.getConversations()
+      setConversations(data)
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao carregar conversas' })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSendMessage = (text: string) => {
+  useEffect(() => {
+    loadConversations()
+  }, [])
+
+  // Fetch messages when conversation selected
+  useEffect(() => {
+    if (selectedId) {
+      const loadMessages = async () => {
+        try {
+          const data = await whatsappService.getMessages(selectedId)
+          setMessages(data)
+        } catch (error) {
+          toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao carregar mensagens' })
+        }
+      }
+      loadMessages()
+    } else {
+      setMessages([])
+    }
+  }, [selectedId])
+
+  const handleSelectConversation = (id: string) => {
+    setSelectedId(id)
+  }
+
+  const handleSendMessage = async (text: string) => {
     if (!selectedId) return
 
-    const newMessage: Message = {
-      id: `m${Date.now()}`,
-      text,
-      sender: 'me',
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      status: 'sent',
+    try {
+      const newMessage = await whatsappService.sendMessage(selectedId, text)
+      setMessages((prev) => [...prev, newMessage])
+      loadConversations() // Refresh list
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao enviar mensagem' })
     }
+  }
 
-    setConversations((prev) =>
-      prev.map((conv) => {
-        if (conv.id === selectedId) {
-          return {
-            ...conv,
-            messages: [...conv.messages, newMessage],
-            lastMessageTime: newMessage.timestamp,
-          }
-        }
-        return conv
-      }),
-    )
+  const handleCloseConversation = async () => {
+    if (!selectedId) return
+    try {
+      await whatsappService.closeConversation(selectedId)
+      toast({ title: 'Sucesso', description: 'Conversa finalizada' })
+      loadConversations()
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao finalizar conversa' })
+    }
+  }
 
-    // Simulate message received (delivered) effect
-    setTimeout(() => {
-      setConversations((prev) =>
-        prev.map((conv) => {
-          if (conv.id === selectedId) {
-            return {
-              ...conv,
-              messages: conv.messages.map((m) =>
-                m.id === newMessage.id
-                  ? { ...m, status: 'delivered' as const }
-                  : m,
-              ),
-            }
-          }
-          return conv
-        }),
-      )
-    }, 1000)
-
-    // Simulate read effect
-    setTimeout(() => {
-      setConversations((prev) =>
-        prev.map((conv) => {
-          if (conv.id === selectedId) {
-            return {
-              ...conv,
-              messages: conv.messages.map((m) =>
-                m.id === newMessage.id ? { ...m, status: 'read' as const } : m,
-              ),
-            }
-          }
-          return conv
-        }),
-      )
-    }, 2500)
+  const handleReopenConversation = async () => {
+    if (!selectedId) return
+    try {
+      await whatsappService.reopenConversation(selectedId)
+      toast({ title: 'Sucesso', description: 'Conversa reaberta' })
+      loadConversations()
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao reabrir conversa' })
+    }
   }
 
   const filteredConversations = useMemo(() => {
     return conversations.filter((conv) => {
       const matchesStatus =
         statusFilter === 'Todas' || conv.status === statusFilter
-      const matchesSearch = conv.contactName
+      const matchesSearch = (conv.contact_name || conv.phone_number)
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
       return matchesStatus && matchesSearch
     })
   }, [conversations, statusFilter, searchTerm])
 
-  const selectedConversation = conversations.find((c) => c.id === selectedId)
+  const handleMessageSent = (newMessage: Message) => {
+    setMessages((prev) => [...prev, newMessage])
+    loadConversations() // Refresh sidebar counts and last message
+  }
+
+  const selectedConversation = conversations.find((c) => c.phone_number === selectedId)
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#D1D7DB] relative">
-      <div className="absolute top-0 w-full h-32 bg-[#00A884] z-0 hidden md:block" />
-
-      <div className="z-10 flex w-full h-full md:h-[calc(100vh-38px)] md:w-[calc(100vw-38px)] md:m-auto md:max-w-[1600px] shadow-lg rounded-none md:rounded-lg overflow-hidden bg-white">
+    <div className="flex h-screen w-full overflow-hidden bg-[#F0F2F5] relative">
+      <div className="z-10 flex w-full h-full shadow-lg overflow-hidden bg-white">
         <Sidebar
           className={cn(
-            'w-full md:w-[400px] md:max-w-[35%] transition-all duration-300',
+            'w-full md:w-[400px] md:max-w-[35%] border-r border-[#E2E8F0]',
             isMobile && selectedId ? 'hidden' : 'flex',
           )}
           conversations={filteredConversations}
@@ -138,16 +126,15 @@ export default function WhatsApp() {
           setSearchTerm={setSearchTerm}
         />
 
-        <div
-          className={cn(
-            'flex-1 w-full h-full transition-all duration-300',
-            isMobile && !selectedId ? 'hidden' : 'flex',
-          )}
-        >
+        <div className={cn('flex-1 h-full', isMobile && !selectedId && 'hidden')}>
           <ChatWindow
             conversation={selectedConversation}
+            messages={messages}
             onBack={() => setSelectedId(undefined)}
             onSendMessage={handleSendMessage}
+            onCloseConversation={handleCloseConversation}
+            onReopenConversation={handleReopenConversation}
+            onMessageSent={handleMessageSent}
           />
         </div>
       </div>

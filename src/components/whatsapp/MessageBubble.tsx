@@ -1,6 +1,6 @@
 import { Check, CheckCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Message } from '@/data/mockData'
+import { Message } from '@/lib/services/whatsapp'
 
 interface MessageBubbleProps {
   message: Message
@@ -8,6 +8,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isMe = message.sender === 'me'
+  const time = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div
@@ -22,23 +23,21 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           isMe ? 'bg-[#DCF8C6] rounded-tr-none' : 'bg-white rounded-tl-none',
         )}
       >
-        <div className="pr-6 pb-2 text-[#111B21]">{message.text}</div>
+        <div className="pr-6 pb-2 text-[#111B21] whitespace-pre-wrap">
+          {message.message_text}
+        </div>
         <div className="absolute right-2 bottom-1 flex items-center gap-1">
           <span className="text-[11px] text-gray-500 leading-none">
-            {message.timestamp}
+            {time}
           </span>
           {isMe && (
             <span
               className={cn(
                 'text-[11px]',
-                message.status === 'read' ? 'text-[#53bdeb]' : 'text-gray-500',
+                'text-[#53bdeb]' // Default is read for now in this mock-to-real transition
               )}
             >
-              {message.status === 'read' ? (
-                <CheckCheck className="w-3 h-3" />
-              ) : (
-                <Check className="w-3 h-3" />
-              )}
+              <CheckCheck className="w-3 h-3" />
             </span>
           )}
         </div>

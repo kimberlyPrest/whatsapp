@@ -14,22 +14,22 @@ import { Conversation, ConversationStatus } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
-  conversations: Conversation[]
+  conversations: any[]
   selectedId?: string
   onSelect: (id: string) => void
-  statusFilter: ConversationStatus | 'Todas'
-  setStatusFilter: (status: ConversationStatus | 'Todas') => void
+  statusFilter: string
+  setStatusFilter: (status: string) => void
   searchTerm: string
   setSearchTerm: (term: string) => void
   className?: string
 }
 
-const statusFilters: (ConversationStatus | 'Todas')[] = [
-  'Todas',
-  'Aguardando Validação',
-  'Sem Resposta',
-  'Aguardando Cliente',
-  'Finalizadas',
+const statusFilters = [
+  { label: 'Todas', value: 'Todas' },
+  { label: 'Pendentes', value: 'AGUARDANDO_VALIDACAO' },
+  { label: 'Gerando', value: 'GERANDO_SUGESTAO' },
+  { label: 'Aguardando Cliente', value: 'AGUARDANDO_CLIENTE' },
+  { label: 'Finalizadas', value: 'FINALIZADO' },
 ]
 
 export function Sidebar({
@@ -92,7 +92,7 @@ export function Sidebar({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#54656F]" />
           <Input
             placeholder="Pesquisar ou começar uma nova conversa"
-            className="pl-9 bg-[#F0F2F5] border-none focus-visible:ring-1 focus-visible:ring-[#00A884] h-9 text-sm placeholder:text-[#54656F]"
+            className="pl-9 bg-[#F0F2F5] border-none focus-visible:ring-1 focus-visible:ring-[#25D366] h-9 text-sm placeholder:text-[#54656F]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -105,16 +105,16 @@ export function Sidebar({
           <div className="flex p-2 gap-2">
             {statusFilters.map((status) => (
               <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
+                key={status.value}
+                onClick={() => setStatusFilter(status.value)}
                 className={cn(
                   'px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap',
-                  statusFilter === status
-                    ? 'bg-[#00A884] text-white shadow-sm'
+                  statusFilter === status.value
+                    ? 'bg-[#25D366] text-white shadow-sm'
                     : 'bg-[#F0F2F5] text-[#54656F] hover:bg-[#E9EDEF]',
                 )}
               >
-                {status}
+                {status.label}
               </button>
             ))}
           </div>
@@ -127,10 +127,10 @@ export function Sidebar({
         {conversations.length > 0 ? (
           conversations.map((conv) => (
             <ConversationItem
-              key={conv.id}
+              key={conv.phone_number}
               conversation={conv}
-              isActive={selectedId === conv.id}
-              onClick={() => onSelect(conv.id)}
+              isActive={selectedId === conv.phone_number}
+              onClick={() => onSelect(conv.phone_number)}
             />
           ))
         ) : (
