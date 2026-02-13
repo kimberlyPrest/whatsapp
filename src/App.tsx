@@ -20,9 +20,7 @@ import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 
 const App = () => (
-  <BrowserRouter
-    future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
-  >
+  <BrowserRouter>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -34,9 +32,10 @@ const App = () => (
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} /> {/* Modified / route to redirect to /dashboard */}
-              <Route path="/dashboard" element={<Dashboard />} /> {/* Added Dashboard route */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/whatsapp" element={<WhatsApp />} />
+              <Route path="/agente-ia" element={<AIAgent />} />
             </Route>
           </Route>
 

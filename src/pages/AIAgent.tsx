@@ -28,7 +28,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,20 +46,20 @@ import {
     MessageSquare,
     Zap,
 } from 'lucide-react'
-import { whatsappService } from '@/lib/services/whatsapp'
+import { whatsappService, AutonomousRule, TrainingFeedback, AIPrompt } from '@/lib/services/whatsapp'
 import { useToast } from '@/hooks/use-toast'
 
 export default function AIAgent() {
-    const [rules, setRules] = useState<any[]>([])
-    const [feedbacks, setFeedbacks] = useState<any[]>([])
-    const [feedbackStatus, setFeedbackStatus] = useState('pending')
-    const [prompts, setPrompts] = useState<any[]>([])
+    const [rules, setRules] = useState<AutonomousRule[]>([])
+    const [feedbacks, setFeedbacks] = useState<TrainingFeedback[]>([])
+    const [feedbackStatus, setFeedbackStatus] = useState<'pending' | 'approved' | 'rejected'>('pending')
+    const [prompts, setPrompts] = useState<AIPrompt[]>([])
     const [loading, setLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingRule, setEditingRule] = useState<any>(null)
+    const [editingRule, setEditingRule] = useState<AutonomousRule | null>(null)
+    const [editingPrompt, setEditingPrompt] = useState<{ id: string, content: string } | null>(null)
     const { toast } = useToast()
 
-    // Form states
     const [formData, setFormData] = useState({
         rule_name: '',
         description: '',
@@ -78,6 +77,12 @@ export default function AIAgent() {
     useEffect(() => {
         loadFeedbacks()
     }, [feedbackStatus])
+
+    useEffect(() => {
+        if (prompts.length > 0 && !editingPrompt) {
+            setEditingPrompt({ id: prompts[0].id, content: prompts[0].prompt_content })
+        }
+    }, [prompts])
 
     async function loadData() {
         setLoading(true)
@@ -105,7 +110,7 @@ export default function AIAgent() {
         }
     }
 
-    const handleOpenModal = (rule?: any) => {
+    const handleOpenModal = (rule?: AutonomousRule) => {
         if (rule) {
             setEditingRule(rule)
             setFormData({
@@ -175,7 +180,7 @@ export default function AIAgent() {
         }
     }
 
-    const handleFeedbackAction = async (feedback: any, status: 'approved' | 'rejected') => {
+    const handleFeedbackAction = async (feedback: TrainingFeedback, status: 'approved' | 'rejected') => {
         try {
             await whatsappService.updateFeedbackStatus(feedback.id, status)
 
@@ -185,7 +190,7 @@ export default function AIAgent() {
                         rule_name: feedback.title,
                         description: feedback.description,
                         response_template: feedback.suggested_value,
-                        trigger_patterns: [], // Need manual editing later or extract from evidence
+                        trigger_patterns: [],
                     })
                     toast({ title: 'Regra Criada', description: 'Uma nova regra foi gerada a partir do feedback' })
                 } else if (feedback.feedback_type === 'prompt_update' && prompts[0]) {
@@ -197,6 +202,17 @@ export default function AIAgent() {
             loadFeedbacks()
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao processar feedback' })
+        }
+    }
+
+    const handleSavePrompt = async () => {
+        if (!editingPrompt) return
+        try {
+            await whatsappService.updateAIPrompt(editingPrompt.id, editingPrompt.content)
+            toast({ title: 'Sucesso', description: 'Prompt atualizado com sucesso' })
+            loadData()
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao atualizar prompt' })
         }
     }
 
@@ -234,7 +250,7 @@ export default function AIAgent() {
 
                 <TabsContent value="rules" className="space-y-4">
                     <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="pt-6 text-[#111B21]">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -289,6 +305,13 @@ export default function AIAgent() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
+                                    {rules.length === 0 && !loading && (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                                                Nenhuma regra configurada.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -325,7 +348,7 @@ export default function AIAgent() {
 
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {feedbacks.length > 0 ? feedbacks.map((f) => (
-                            <Card key={f.id} className="flex flex-col">
+                            <Card key={f.id} className="flex flex-col text-[#111B21]">
                                 <CardHeader>
                                     <div className="flex justify-between items-start mb-2">
                                         <Badge variant="secondary" className="capitalize">
@@ -383,22 +406,19 @@ export default function AIAgent() {
                         <CardContent>
                             {prompts.map((p) => (
                                 <div key={p.id} className="space-y-4">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-center text-[#111B21]">
                                         <Label className="text-base font-bold">{p.prompt_name}</Label>
                                         <Badge variant="outline">v{p.version}</Badge>
                                     </div>
                                     <Textarea
-                                        defaultValue={p.prompt_content}
-                                        className="min-h-[400px] font-mono text-sm"
-                                        onChange={(e) => {
-                                            // Logic to save would go here
-                                        }}
+                                        value={editingPrompt?.id === p.id ? editingPrompt.content : p.prompt_content}
+                                        className="min-h-[400px] font-mono text-sm text-[#111B21]"
+                                        onChange={(e) => setEditingPrompt({ id: p.id, content: e.target.value })}
                                     />
                                     <Button
                                         className="bg-[#25D366] hover:bg-[#1fb355] text-white"
-                                        onClick={() => {
-                                            toast({ title: 'Sucesso', description: 'Prompt atualizado (simulação)' })
-                                        }}
+                                        onClick={handleSavePrompt}
+                                        disabled={editingPrompt?.content === p.prompt_content}
                                     >
                                         Salvar Prompt
                                     </Button>
@@ -411,7 +431,7 @@ export default function AIAgent() {
 
             {/* New/Edit Rule Modal */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl text-[#111B21]">
                     <DialogHeader>
                         <DialogTitle>{editingRule ? 'Editar Regra' : 'Nova Regra Autônoma'}</DialogTitle>
                         <DialogDescription>

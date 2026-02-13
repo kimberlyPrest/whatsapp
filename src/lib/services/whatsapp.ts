@@ -13,16 +13,37 @@ export interface Message {
     created_at: string;
 }
 
-export interface Conversation {
-    phone_number: string;
-    contact_name: string | null;
-    last_message_text: string | null;
-    last_message_at: string | null;
-    last_sender: string | null;
-    manually_closed: boolean;
-    unread_count: number;
-    status?: string;
-    status_color?: string;
+export interface AutonomousRule {
+    id: string;
+    rule_name: string;
+    description: string | null;
+    trigger_patterns: string[];
+    response_template: string;
+    auto_send: boolean;
+    should_close: boolean;
+    priority: number;
+    is_active: boolean;
+    usage_count: number;
+    created_at: string;
+}
+
+export interface TrainingFeedback {
+    id: string;
+    feedback_type: 'new_rule' | 'prompt_update' | 'improvement';
+    title: string;
+    description: string;
+    suggested_value: string;
+    evidence: any;
+    status: 'pending' | 'approved' | 'rejected';
+    created_at: string;
+}
+
+export interface AIPrompt {
+    id: string;
+    prompt_name: string;
+    prompt_content: string;
+    version: number;
+    created_at: string;
 }
 
 export const whatsappService = {
