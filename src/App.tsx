@@ -20,9 +20,7 @@ import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 
 const App = () => (
-  <BrowserRouter
-    future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
-  >
+  <BrowserRouter>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -39,6 +37,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />{' '}
               {/* Added Dashboard route */}
               <Route path="/whatsapp" element={<WhatsApp />} />
+              <Route path="/agente-ia" element={<AIAgent />} />
             </Route>
           </Route>
 
