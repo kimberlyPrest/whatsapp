@@ -10,7 +10,6 @@ import {
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Tooltip,
@@ -19,48 +18,80 @@ import {
 } from '@/components/ui/tooltip'
 import { MessageBubble } from './MessageBubble'
 import { AISuggestion } from './AISuggestion'
-import { Conversation, Message, ConversationStatus } from '@/data/mockData'
+import { Message, whatsappService } from '@/lib/services/whatsapp'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 interface ChatWindowProps {
-  conversation?: Conversation
+  conversation?: any
+  messages: Message[]
   onBack: () => void
   onSendMessage: (text: string) => void
-}
-
-const statusColors: Record<ConversationStatus, string> = {
-  'Aguardando Validação': 'bg-[#EF4444]',
-  'Sem Resposta': 'bg-[#FBBF24]',
-  'Aguardando Cliente': 'bg-[#3B82F6]',
-  Finalizadas: 'bg-[#6B7280]',
+  onCloseConversation: () => void
+  onReopenConversation: () => void
+  onMessageSent?: (message: Message) => void
 }
 
 export function ChatWindow({
   conversation,
+  messages,
   onBack,
   onSendMessage,
+  onCloseConversation,
+  onReopenConversation,
+  onMessageSent,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('')
+  const [suggestion, setSuggestion] = useState<any>(null)
   const [showSuggestion, setShowSuggestion] = useState(true)
+  const [isSending, setIsSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
   // Reset state when conversation changes
   useEffect(() => {
     setInputText('')
     setShowSuggestion(true)
-  }, [conversation?.id])
+    setSuggestion(null)
+    setIsSending(false)
+
+    if (conversation?.phone_number) {
+      whatsappService.getAISuggestion(conversation.phone_number).then(setSuggestion)
+    }
+  }, [conversation?.phone_number])
 
   // Scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [conversation?.messages])
+  }, [messages])
 
-  const handleSendMessage = () => {
-    if (inputText.trim()) {
-      onSendMessage(inputText)
-      setInputText('')
+  const handleSendMessage = async () => {
+    if (inputText.trim() && conversation) {
+      setIsSending(true)
+      try {
+        // Se houver uma sugestão pendente e o texto for enviado (mesmo que editado), 
+        // usamos a Edge Function para marcar como resolvida
+        let sentMessage;
+        if (suggestion) {
+          sentMessage = await whatsappService.sendFinalMessage(
+            conversation.phone_number,
+            inputText,
+            suggestion.id
+          )
+        } else {
+          sentMessage = await whatsappService.sendMessage(conversation.phone_number, inputText)
+        }
+
+        onMessageSent?.(sentMessage)
+        setInputText('')
+        setSuggestion(null)
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao enviar mensagem' })
+      } finally {
+        setIsSending(false)
+      }
     }
   }
 
@@ -68,6 +99,26 @@ export function ChatWindow({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
+    }
+  }
+
+  const handleApproveSuggestion = async () => {
+    if (suggestion && conversation) {
+      setIsSending(true)
+      try {
+        const sentMessage = await whatsappService.approveSuggestion(
+          suggestion.id,
+          conversation.phone_number,
+          suggestion.suggestion_text
+        )
+        onMessageSent?.(sentMessage)
+        setShowSuggestion(false)
+        setSuggestion(null)
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao aprovar sugestão' })
+      } finally {
+        setIsSending(false)
+      }
     }
   }
 
@@ -86,18 +137,15 @@ export function ChatWindow({
             WhatsApp para Operadores
           </h1>
           <p className="text-[#667781] text-sm leading-6">
-            Envie e receba mensagens sem precisar manter seu celular conectado.{' '}
-            <br />
-            Use o WhatsApp em até 4 aparelhos e 1 celular ao mesmo tempo.
+            Atendimento inteligente com suporte de IA.<br />
+            Gerencie suas conversas e aprove as sugestões com facilidade.
           </p>
-          <div className="mt-8 flex items-center justify-center gap-2 text-[#8696a0] text-xs">
-            <span className="w-3 h-3 bg-gray-400 rounded-full inline-block"></span>
-            Protegido com criptografia de ponta a ponta
-          </div>
         </div>
       </div>
     )
   }
+
+  const contactName = conversation.contact_name || conversation.phone_number
 
   return (
     <div className="flex flex-col h-full bg-[#EFEAE2]">
@@ -114,30 +162,50 @@ export function ChatWindow({
           </Button>
 
           <Avatar className="cursor-pointer">
-            <AvatarImage src={conversation.avatar} />
+            <AvatarImage src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`} />
             <AvatarFallback>
-              {conversation.contactName.substring(0, 2)}
+              {contactName.substring(0, 2)}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex flex-col">
             <span className="font-medium text-[#111B21] text-sm md:text-base leading-tight">
-              {conversation.contactName}
+              {contactName}
             </span>
             <div className="flex items-center gap-2 mt-0.5">
               <Badge
                 className={cn(
                   'text-[9px] text-white px-1.5 py-0 h-3.5 font-normal uppercase tracking-wide border-0',
-                  statusColors[conversation.status],
                 )}
+                style={{ backgroundColor: conversation.status_color || '#6B7280' }}
               >
-                {conversation.status}
+                {conversation.status?.replace('_', ' ')}
               </Badge>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-[#54656F]">
+        <div className="flex items-center gap-2 text-[#54656F]">
+          {conversation.status === 'FINALIZADO' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs font-medium border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10"
+              onClick={onReopenConversation}
+            >
+              Reabrir
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs font-medium text-gray-500 hover:text-red-500 hover:bg-red-50"
+              onClick={onCloseConversation}
+            >
+              Finalizar Conversa
+            </Button>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
@@ -146,20 +214,12 @@ export function ChatWindow({
             </TooltipTrigger>
             <TooltipContent>Pesquisar</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <MoreVertical className="w-5 h-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Mais opções</TooltipContent>
-          </Tooltip>
         </div>
       </header>
 
       {/* Messages Area */}
       <div
-        className="flex-1 overflow-y-auto p-4 md:p-[5%] bg-[url('https://img.usecurling.com/i?q=subtle%20doodle%20pattern&color=gray')] bg-repeat bg-[length:400px_400px]"
+        className="flex-1 overflow-y-auto p-4 md:p-[5%] bg-repeat bg-[length:400px_400px]"
         ref={scrollRef}
         style={{
           backgroundColor: '#E5DDD5',
@@ -168,7 +228,7 @@ export function ChatWindow({
         }}
       >
         <div className="flex flex-col gap-1">
-          {conversation.messages.map((msg) => (
+          {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
         </div>
@@ -177,15 +237,13 @@ export function ChatWindow({
       {/* Footer Area */}
       <div className="bg-[#F0F2F5] p-2 md:p-3 shrink-0">
         {/* AI Suggestion */}
-        {conversation.aiSuggestion && showSuggestion && (
+        {suggestion && showSuggestion && (
           <AISuggestion
-            suggestion={conversation.aiSuggestion}
-            onApprove={() => {
-              onSendMessage(conversation.aiSuggestion!)
-              setShowSuggestion(false)
-            }}
+            suggestion={suggestion.suggestion_text}
+            onApprove={handleApproveSuggestion}
             onEdit={() => {
-              setInputText(conversation.aiSuggestion!)
+              setInputText(suggestion.suggestion_text)
+              setShowSuggestion(false)
             }}
             onDiscard={() => {
               setShowSuggestion(false)
@@ -200,6 +258,7 @@ export function ChatWindow({
               variant="ghost"
               size="icon"
               className="rounded-full h-10 w-10 shrink-0"
+              disabled={isSending}
             >
               <Smile className="w-6 h-6" />
             </Button>
@@ -207,6 +266,7 @@ export function ChatWindow({
               variant="ghost"
               size="icon"
               className="rounded-full h-10 w-10 shrink-0"
+              disabled={isSending}
             >
               <Paperclip className="w-6 h-6" />
             </Button>
@@ -215,21 +275,30 @@ export function ChatWindow({
           <div className="flex-1 bg-white rounded-lg min-h-[42px] flex items-center px-4 py-2 shadow-sm mb-1">
             <input
               className="w-full bg-transparent border-none outline-none text-[#111B21] text-[15px] placeholder:text-[#54656F]"
-              placeholder="Mensagem"
+              placeholder={isSending ? "Enviando..." : "Mensagem"}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
+              disabled={isSending}
             />
           </div>
 
           <div className="mb-2">
-            {inputText.trim() ? (
+            {inputText.trim() || isSending ? (
               <Button
                 onClick={handleSendMessage}
                 size="icon"
-                className="rounded-full bg-[#00A884] hover:bg-[#008f6f] h-10 w-10 shrink-0"
+                className={cn(
+                  "rounded-full bg-[#25D366] hover:bg-[#1fb355] h-10 w-10 shrink-0 transition-all",
+                  isSending && "w-auto px-4"
+                )}
+                disabled={isSending}
               >
-                <Send className="w-5 h-5 text-white ml-0.5" />
+                {isSending ? (
+                  <span className="text-xs text-white font-medium animate-pulse">Enviando...</span>
+                ) : (
+                  <Send className="w-5 h-5 text-white ml-0.5" />
+                )}
               </Button>
             ) : (
               <Button
