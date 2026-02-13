@@ -42,7 +42,12 @@ import {
   MessageSquare,
   Zap,
 } from 'lucide-react'
-import { whatsappService, AutonomousRule, TrainingFeedback, AIPrompt } from '@/lib/services/whatsapp'
+import {
+  whatsappService,
+  AutonomousRule,
+  TrainingFeedback,
+  AIPrompt,
+} from '@/lib/services/whatsapp'
 import { useToast } from '@/hooks/use-toast'
 
 export default function AIAgent() {
