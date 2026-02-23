@@ -20,7 +20,9 @@ export function useBackup() {
           total: parsed.total || 0,
           progress: parsed.progress || 0,
         }
-      } catch (e) {}
+      } catch (e) {
+        // Ignore JSON parse error and fallback to default state
+      }
     }
     return {
       isRunning: false,
