@@ -205,7 +205,7 @@ export function useBackup() {
             const { error: convErr } = await supabase
               .from('conversations')
               .upsert(Array.from(convsMap.values()), {
-                onConflict: 'phone_number',
+                onConflict: 'remote_jid',
                 ignoreDuplicates: false,
               })
             if (convErr) throw new Error(convErr.message)
