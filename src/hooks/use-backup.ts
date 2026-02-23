@@ -206,6 +206,7 @@ export function useBackup() {
               .from('conversations')
               .upsert(Array.from(convsMap.values()), {
                 onConflict: 'phone_number',
+                ignoreDuplicates: false,
               })
             if (convErr) throw new Error(convErr.message)
 
@@ -213,6 +214,7 @@ export function useBackup() {
               .from('messages')
               .upsert(messages, {
                 onConflict: 'message_hash',
+                ignoreDuplicates: false,
               })
             if (msgErr) throw new Error(msgErr.message)
 
@@ -220,6 +222,8 @@ export function useBackup() {
             addLog(`✅ Página ${page}: ${messages.length} mensagens salvas`)
           } catch (dbErr: any) {
             addLog(`❌ Página ${page}: ${dbErr.message}`)
+            setState((s) => ({ ...s, isRunning: false }))
+            return false
           }
         }
 
