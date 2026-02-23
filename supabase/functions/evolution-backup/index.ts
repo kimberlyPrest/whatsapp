@@ -36,6 +36,8 @@ serve(async (req) => {
 
     const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')
 
+    console.log(`EVOLUTION_API_KEY present: ${!!EVOLUTION_API_KEY}`)
+
     if (!EVOLUTION_API_KEY) {
       return new Response(
         JSON.stringify({
@@ -54,10 +56,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Pass the token in multiple supported formats for Evolution API (Global vs Instance tokens)
         apikey: EVOLUTION_API_KEY.trim(),
-        apiKey: EVOLUTION_API_KEY.trim(),
-        Authorization: `Bearer ${EVOLUTION_API_KEY.trim()}`,
       },
       body: JSON.stringify({}), // Send empty body as required for POST with query params
     })
