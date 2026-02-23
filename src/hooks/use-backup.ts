@@ -96,22 +96,30 @@ export function useBackup() {
                 last_message_text: m.message_text,
                 last_message_at: m.created_at,
                 last_sender: m.sender,
+                updated_at: new Date().toISOString(),
               })
             }
           })
 
-          await supabase
-            .from('conversations')
-            .upsert(Array.from(convsMap.values()), {
-              onConflict: 'phone_number',
-            })
-          const { error: insErr } = await supabase
-            .from('messages')
-            .upsert(messages, {
-              onConflict: 'message_hash',
-              ignoreDuplicates: true,
-            })
-          if (insErr) addLog(`Erro ao salvar mensagens: ${insErr.message}`)
+          try {
+            const { error: convErr } = await supabase
+              .from('conversations')
+              .upsert(Array.from(convsMap.values()), {
+                onConflict: 'phone_number',
+              })
+            if (convErr) throw new Error(convErr.message)
+
+            const { error: msgErr } = await supabase
+              .from('messages')
+              .upsert(messages, {
+                onConflict: 'message_hash',
+              })
+            if (msgErr) throw new Error(msgErr.message)
+
+            addLog(`✅ Página ${page}: ${messages.length} mensagens salvas`)
+          } catch (dbErr: any) {
+            addLog(`❌ Página ${page}: ${dbErr.message}`)
+          }
         }
 
         const currentTotal =
