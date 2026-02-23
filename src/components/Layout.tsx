@@ -6,6 +6,7 @@ import {
   MessageCircle,
   LayoutDashboard,
   BrainCircuit,
+  Settings,
 } from 'lucide-react'
 
 const Layout = () => {
@@ -58,6 +59,14 @@ const Layout = () => {
             >
               <BrainCircuit className="w-4 h-4 mr-2" />
               Agente IA
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/settings')}
+              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Configurações
             </Button>
           </nav>
         </div>
