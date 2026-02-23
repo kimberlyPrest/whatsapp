@@ -14,6 +14,19 @@ serve(async (req) => {
   }
 
   try {
+    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')
+    console.log(`KEY_FOUND: ${!!EVOLUTION_API_KEY}`)
+
+    if (!EVOLUTION_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'Secret EVOLUTION_API_KEY not configured' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
@@ -29,22 +42,6 @@ serve(async (req) => {
         JSON.stringify({ error: 'Invalid or missing page/limit parameters' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      )
-    }
-
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')
-
-    console.log(`EVOLUTION_API_KEY present: ${!!EVOLUTION_API_KEY}`)
-
-    if (!EVOLUTION_API_KEY) {
-      return new Response(
-        JSON.stringify({
-          error: 'Server misconfiguration: Missing EVOLUTION_API_KEY',
-        }),
-        {
-          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         },
       )
