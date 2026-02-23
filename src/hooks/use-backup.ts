@@ -1,14 +1,65 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { useToast } from '@/hooks/use-toast'
+
+const STORAGE_KEY = 'whatsapp_backup_state'
 
 export function useBackup() {
-  const [state, setState] = useState({
-    isRunning: false,
-    current: 0,
-    total: 0,
-    progress: 0,
+  const { toast } = useToast()
+
+  const [state, setState] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        return {
+          isRunning: false,
+          isPaused: parsed.current > 0 && parsed.current < parsed.total,
+          isCompleted: parsed.current > 0 && parsed.current >= parsed.total,
+          current: parsed.current || 0,
+          total: parsed.total || 0,
+          progress: parsed.progress || 0,
+        }
+      } catch (e) {}
+    }
+    return {
+      isRunning: false,
+      isPaused: false,
+      isCompleted: false,
+      current: 0,
+      total: 0,
+      progress: 0,
+    }
   })
+
   const [logs, setLogs] = useState<string[]>([])
+  const pauseRef = useRef(false)
+  const totalProcessedRef = useRef(0)
+
+  useEffect(() => {
+    if (
+      state.current > 0 &&
+      !state.isCompleted &&
+      (state.isRunning || state.isPaused)
+    ) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          current: state.current,
+          total: state.total,
+          progress: state.progress,
+        }),
+      )
+    } else if (state.isCompleted) {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+  }, [
+    state.total,
+    state.progress,
+    state.isCompleted,
+    state.isRunning,
+    state.isPaused,
+  ])
 
   const addLog = useCallback(
     (msg: string) =>
@@ -16,18 +67,62 @@ export function useBackup() {
     [],
   )
 
-  const startBackup = async () => {
-    if (state.isRunning) return false
-    setState({ isRunning: true, current: 0, total: 0, progress: 0 })
+  const clearLogs = useCallback(() => {
     setLogs([])
-    addLog('Iniciando processo de backup...')
+  }, [])
+
+  const togglePause = useCallback(() => {
+    if (state.isRunning) {
+      pauseRef.current = true
+      setState((s) => ({ ...s, isRunning: false, isPaused: true }))
+      addLog(
+        'Sinal de pausa enviado. O backup será pausado após a iteração atual.',
+      )
+    } else if (state.isPaused) {
+      startBackup(true)
+    }
+  }, [state.isRunning, state.isPaused])
+
+  const startBackup = async (resume = false) => {
+    if (state.isRunning) return false
+
+    let startPage = 1
+    if (resume && state.current > 0) {
+      startPage = state.current
+    } else {
+      setLogs([])
+      totalProcessedRef.current = 0
+      setState({
+        isRunning: true,
+        isPaused: false,
+        isCompleted: false,
+        current: 0,
+        total: 0,
+        progress: 0,
+      })
+      localStorage.removeItem(STORAGE_KEY)
+    }
+
+    setState((s) => ({
+      ...s,
+      isRunning: true,
+      isPaused: false,
+      isCompleted: false,
+    }))
+    pauseRef.current = false
+
+    addLog(
+      resume
+        ? `Retomando processo de backup da página ${startPage}...`
+        : 'Iniciando processo de backup...',
+    )
 
     try {
-      let page = 1
+      let page = startPage
       let hasMore = true
-      let totalPagesCount = 0
+      let totalPagesCount = state.total
 
-      while (hasMore) {
+      while (hasMore && !pauseRef.current) {
         addLog(`Buscando página ${page}...`)
         const { data, error } = await supabase.functions.invoke(
           'evolution-backup',
@@ -45,7 +140,10 @@ export function useBackup() {
           setState((s) => ({ ...s, total: totalPagesCount }))
         }
 
-        if (!records.length) break
+        if (!records.length) {
+          hasMore = false
+          break
+        }
 
         const valid = records.filter((m) => {
           const jid = m?.key?.remoteJid || m?.remoteJid || ''
@@ -116,6 +214,7 @@ export function useBackup() {
               })
             if (msgErr) throw new Error(msgErr.message)
 
+            totalProcessedRef.current += messages.length
             addLog(`✅ Página ${page}: ${messages.length} mensagens salvas`)
           } catch (dbErr: any) {
             addLog(`❌ Página ${page}: ${dbErr.message}`)
@@ -128,10 +227,17 @@ export function useBackup() {
             : total > 0
               ? Math.ceil(total / 50)
               : page + 1
+
+        const nextProgress = Math.min(
+          100,
+          Math.round((page / currentTotal) * 100),
+        )
+
         setState((s) => ({
           ...s,
           current: page,
-          progress: Math.min(100, Math.round((page / currentTotal) * 100)),
+          total: totalPagesCount > 0 ? totalPagesCount : s.total,
+          progress: nextProgress,
         }))
 
         if (
@@ -140,28 +246,48 @@ export function useBackup() {
         ) {
           hasMore = false
         } else {
-          page++
-          await new Promise((r) => setTimeout(r, 2000))
+          if (!pauseRef.current) {
+            page++
+            await new Promise((r) => setTimeout(r, 2000))
+          }
         }
       }
 
-      setState((s) => ({ ...s, progress: 100 }))
+      if (pauseRef.current) {
+        addLog('Backup pausado com sucesso.')
+        return true
+      }
+
+      setState((s) => ({
+        ...s,
+        progress: 100,
+        isRunning: false,
+        isCompleted: true,
+        isPaused: false,
+      }))
       addLog('Backup finalizado com sucesso!')
+      toast({
+        title: 'Sucesso',
+        description: `Backup concluído! ${totalProcessedRef.current} mensagens processadas`,
+      })
       return true
     } catch (err: any) {
       addLog(`Erro crítico: ${err.message}`)
-      return false
-    } finally {
       setState((s) => ({ ...s, isRunning: false }))
+      return false
     }
   }
 
   return {
     isRunning: state.isRunning,
+    isPaused: state.isPaused,
+    isCompleted: state.isCompleted,
     currentPage: state.current,
     totalPages: state.total,
     progress: state.progress,
     logs,
     startBackup,
+    togglePause,
+    clearLogs,
   }
 }
