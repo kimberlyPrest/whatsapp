@@ -214,12 +214,14 @@ export function useBackup() {
               .from('messages')
               .upsert(messages, {
                 onConflict: 'message_hash',
-                ignoreDuplicates: false,
+                ignoreDuplicates: true,
               })
             if (msgErr) throw new Error(msgErr.message)
 
             totalProcessedRef.current += messages.length
-            addLog(`✅ Página ${page}: ${messages.length} mensagens salvas`)
+            addLog(
+              `✅ Página ${page}: ${messages.length} mensagens processadas.`,
+            )
           } catch (dbErr: any) {
             addLog(`❌ Página ${page}: ${dbErr.message}`)
             setState((s) => ({ ...s, isRunning: false }))
@@ -274,7 +276,7 @@ export function useBackup() {
       addLog('Backup finalizado com sucesso!')
       toast({
         title: 'Sucesso',
-        description: `Backup concluído! ${totalProcessedRef.current} mensagens processadas`,
+        description: `Backup concluído! ${totalProcessedRef.current} mensagens verificadas/processadas.`,
       })
       return true
     } catch (err: any) {
