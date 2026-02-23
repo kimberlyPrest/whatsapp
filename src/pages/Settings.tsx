@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   Card,
   CardContent,
@@ -10,30 +10,14 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Play, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react'
+import { useBackup } from '@/hooks/use-backup'
 import { useToast } from '@/hooks/use-toast'
 
-type BackupStatus = 'idle' | 'running' | 'completed' | 'error'
-
 export default function SettingsPage() {
-  const [status, setStatus] = useState<BackupStatus>('idle')
-  const [progress, setProgress] = useState(0)
-  const [currentPage, setCurrentPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(0)
-  const [logs, setLogs] = useState<
-    { time: string; message: string; type: 'info' | 'success' | 'error' }[]
-  >([])
+  const { isRunning, currentPage, totalPages, progress, logs, startBackup } =
+    useBackup()
   const logContainerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
-
-  const addLog = (
-    message: string,
-    type: 'info' | 'success' | 'error' = 'info',
-  ) => {
-    setLogs((prev) => [
-      ...prev,
-      { time: new Date().toLocaleTimeString(), message, type },
-    ])
-  }
 
   useEffect(() => {
     if (logContainerRef.current) {
@@ -42,84 +26,60 @@ export default function SettingsPage() {
   }, [logs])
 
   const handleStartBackup = async () => {
-    setStatus('running')
-    setProgress(0)
-    setCurrentPage(0)
-    setLogs([])
-
-    const pagesToSync = 15
-    setTotalPages(pagesToSync)
-    addLog('Iniciando processo de sincronização de backup...', 'info')
-
-    try {
-      for (let i = 1; i <= pagesToSync; i++) {
-        // Simulating backend request for each page
-        await new Promise((resolve) => setTimeout(resolve, 600))
-
-        setCurrentPage(i)
-        setProgress((i / pagesToSync) * 100)
-        addLog(
-          `Página ${i} de ${pagesToSync} processada. Inserindo mensagens e conversas no banco de dados local.`,
-          'info',
-        )
-      }
-
-      setStatus('completed')
-      addLog('Processo de backup concluído com sucesso!', 'success')
+    const success = await startBackup()
+    if (success) {
       toast({
         title: 'Backup Concluído',
-        description: 'Todas as mensagens históricas foram sincronizadas.',
+        description: 'O histórico de mensagens foi sincronizado.',
       })
-    } catch (error) {
-      setStatus('error')
-      addLog('Erro inesperado durante a sincronização.', 'error')
+    } else {
       toast({
         variant: 'destructive',
         title: 'Erro no Backup',
-        description: 'Ocorreu um erro ao sincronizar as mensagens.',
+        description: 'Verifique os logs para detalhes do erro.',
       })
     }
   }
 
   const getStatusBadge = () => {
-    switch (status) {
-      case 'idle':
-        return (
-          <Badge
-            variant="outline"
-            className="text-slate-500 border-slate-200 bg-slate-50"
-          >
-            <Clock className="w-3 h-3 mr-1" /> Idle
-          </Badge>
-        )
-      case 'running':
-        return (
-          <Badge
-            variant="outline"
-            className="text-indigo-600 border-indigo-200 bg-indigo-50"
-          >
-            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Em andamento
-          </Badge>
-        )
-      case 'completed':
-        return (
-          <Badge
-            variant="outline"
-            className="text-emerald-600 border-emerald-200 bg-emerald-50"
-          >
-            <CheckCircle2 className="w-3 h-3 mr-1" /> Concluído
-          </Badge>
-        )
-      case 'error':
-        return (
-          <Badge
-            variant="outline"
-            className="text-red-600 border-red-200 bg-red-50"
-          >
-            <XCircle className="w-3 h-3 mr-1" /> Erro
-          </Badge>
-        )
+    if (isRunning) {
+      return (
+        <Badge
+          variant="outline"
+          className="text-indigo-600 border-indigo-200 bg-indigo-50"
+        >
+          <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Em andamento
+        </Badge>
+      )
     }
+    if (logs.some((l) => l.toLowerCase().includes('erro crítico'))) {
+      return (
+        <Badge
+          variant="outline"
+          className="text-red-600 border-red-200 bg-red-50"
+        >
+          <XCircle className="w-3 h-3 mr-1" /> Erro
+        </Badge>
+      )
+    }
+    if (progress === 100) {
+      return (
+        <Badge
+          variant="outline"
+          className="text-emerald-600 border-emerald-200 bg-emerald-50"
+        >
+          <CheckCircle2 className="w-3 h-3 mr-1" /> Concluído
+        </Badge>
+      )
+    }
+    return (
+      <Badge
+        variant="outline"
+        className="text-slate-500 border-slate-200 bg-slate-50"
+      >
+        <Clock className="w-3 h-3 mr-1" /> Idle
+      </Badge>
+    )
   }
 
   return (
@@ -133,77 +93,73 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Backup de Mensagens</CardTitle>
-                <CardDescription>
-                  Sincronize o histórico de conversas para garantir que o banco
-                  de dados local esteja atualizado.
-                </CardDescription>
-              </div>
-              {getStatusBadge()}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Backup de Mensagens</CardTitle>
+              <CardDescription>
+                Sincronize o histórico de conversas para garantir que o banco de
+                dados local esteja atualizado.
+              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Progresso da Sincronização
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {status === 'idle'
-                    ? 'Nenhum backup em andamento'
-                    : `Página ${currentPage} de ${totalPages}`}
-                </p>
-              </div>
-              <Button
-                onClick={handleStartBackup}
-                disabled={status === 'running'}
-                className="bg-[#25D366] hover:bg-[#1fb355] text-white"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Iniciar Backup
-              </Button>
+            {getStatusBadge()}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-none">
+                Progresso da Sincronização
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {!isRunning && progress === 0
+                  ? 'Nenhum backup em andamento'
+                  : `Página ${currentPage} de ${totalPages || '?'}`}
+              </p>
             </div>
+            <Button
+              onClick={handleStartBackup}
+              disabled={isRunning}
+              className="bg-[#25D366] hover:bg-[#1fb355] text-white"
+            >
+              <Play className="w-4 h-4 mr-2" /> Iniciar Backup
+            </Button>
+          </div>
 
-            <Progress value={progress} className="w-full h-2" />
+          <Progress value={progress} className="w-full h-2" />
 
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Logs de Execução</p>
-              <div
-                ref={logContainerRef}
-                className="bg-slate-950 rounded-md p-4 h-[250px] overflow-y-auto font-mono text-xs"
-              >
-                {logs.length === 0 ? (
-                  <span className="text-slate-500">
-                    Nenhum log disponível. Inicie o backup para ver o progresso.
-                  </span>
-                ) : (
-                  logs.map((log, index) => (
-                    <div key={index} className="mb-1 flex gap-3">
-                      <span className="text-slate-500 shrink-0">
-                        [{log.time}]
-                      </span>
+          <div className="mt-4">
+            <p className="text-sm font-medium mb-2">Logs de Execução</p>
+            <div
+              ref={logContainerRef}
+              className="bg-slate-950 rounded-md p-4 h-[250px] overflow-y-auto font-mono text-xs"
+            >
+              {logs.length === 0 ? (
+                <span className="text-slate-500">
+                  Nenhum log disponível. Inicie o backup para ver o progresso.
+                </span>
+              ) : (
+                logs.map((log, i) => {
+                  const isError = log.toLowerCase().includes('erro')
+                  const isSuccess = log.toLowerCase().includes('sucesso')
+                  return (
+                    <div key={i} className="mb-1 flex gap-3">
                       <span
-                        className={`
-                        ${log.type === 'info' ? 'text-slate-300' : ''}
-                        ${log.type === 'success' ? 'text-emerald-400' : ''}
-                        ${log.type === 'error' ? 'text-red-400' : ''}
-                      `}
+                        className={`${isError ? 'text-red-400' : ''} ${
+                          isSuccess ? 'text-emerald-400' : ''
+                        } ${!isError && !isSuccess ? 'text-slate-300' : ''}`}
                       >
-                        {log.message}
+                        {log}
                       </span>
                     </div>
-                  ))
-                )}
-              </div>
+                  )
+                })
+              )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
