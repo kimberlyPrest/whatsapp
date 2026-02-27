@@ -70,7 +70,7 @@ export default function WhatsApp() {
 
     try {
       const newMessage = await whatsappService.sendMessage(selectedId, text)
-      setMessages((prev) => [...prev, newMessage])
+      setMessages((prev) => [newMessage, ...prev])
       loadConversations() // Refresh list
     } catch (error: any) {
       toast({
@@ -123,7 +123,7 @@ export default function WhatsApp() {
   }, [conversations, statusFilter, searchTerm])
 
   const handleMessageSent = (newMessage: Message) => {
-    setMessages((prev) => [...prev, newMessage])
+    setMessages((prev) => [newMessage, ...prev])
     loadConversations() // Refresh sidebar counts and last message
   }
 

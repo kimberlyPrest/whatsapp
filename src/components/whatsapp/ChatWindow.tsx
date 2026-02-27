@@ -62,10 +62,10 @@ export function ChatWindow({
     }
   }, [conversation?.phone_number])
 
-  // Scroll to bottom on new messages
+  // Scroll to top on new messages as they are ordered newest first
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      scrollRef.current.scrollTop = 0
     }
   }, [messages])
 
