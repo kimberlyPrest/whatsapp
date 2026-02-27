@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.1'
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -138,18 +138,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'conversation_embeddings_phone_number_fkey'
-            columns: ['phone_number']
+            foreignKeyName: "conversation_embeddings_phone_number_fkey"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: 'conversation_status'
-            referencedColumns: ['phone_number']
+            referencedRelation: "conversation_status"
+            referencedColumns: ["phone_number"]
           },
           {
-            foreignKeyName: 'conversation_embeddings_phone_number_fkey'
-            columns: ['phone_number']
+            foreignKeyName: "conversation_embeddings_phone_number_fkey"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['phone_number']
+            referencedRelation: "conversations"
+            referencedColumns: ["phone_number"]
           },
         ]
       }
@@ -267,18 +267,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'messages_phone_number_fkey'
-            columns: ['phone_number']
+            foreignKeyName: "messages_phone_number_fkey"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: 'conversation_status'
-            referencedColumns: ['phone_number']
+            referencedRelation: "conversation_status"
+            referencedColumns: ["phone_number"]
           },
           {
-            foreignKeyName: 'messages_phone_number_fkey'
-            columns: ['phone_number']
+            foreignKeyName: "messages_phone_number_fkey"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['phone_number']
+            referencedRelation: "conversations"
+            referencedColumns: ["phone_number"]
           },
         ]
       }
@@ -339,25 +339,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'suggestions_matched_rule_id_fkey'
-            columns: ['matched_rule_id']
+            foreignKeyName: "suggestions_matched_rule_id_fkey"
+            columns: ["matched_rule_id"]
             isOneToOne: false
-            referencedRelation: 'autonomous_rules'
-            referencedColumns: ['id']
+            referencedRelation: "autonomous_rules"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'suggestions_phone_number_fkey'
-            columns: ['phone_number']
+            foreignKeyName: "suggestions_phone_number_fkey"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: 'conversation_status'
-            referencedColumns: ['phone_number']
+            referencedRelation: "conversation_status"
+            referencedColumns: ["phone_number"]
           },
           {
-            foreignKeyName: 'suggestions_phone_number_fkey'
-            columns: ['phone_number']
+            foreignKeyName: "suggestions_phone_number_fkey"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['phone_number']
+            referencedRelation: "conversations"
+            referencedColumns: ["phone_number"]
           },
         ]
       }
@@ -464,33 +464,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -499,23 +499,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -524,23 +524,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -549,36 +549,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -587,9 +587,139 @@ export const Constants = {
   },
 } as const
 
+
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
-// This section contains constraints, RLS policies, functions, triggers,
-// indexes and materialized views not present in the type definitions above.
+// This section contains actual PostgreSQL column types, constraints, RLS policies,
+// functions, triggers, indexes and materialized views not present in the type definitions above.
+// IMPORTANT: The TypeScript types above map UUID, TEXT, VARCHAR all to "string".
+// Use the COLUMN TYPES section below to know the real PostgreSQL type for each column.
+// Always use the correct PostgreSQL type when writing SQL migrations.
+
+// --- COLUMN TYPES (actual PostgreSQL types) ---
+// Use this to know the real database type when writing migrations.
+// "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: ai_prompts
+//   id: uuid (not null, default: gen_random_uuid())
+//   prompt_name: text (not null)
+//   prompt_content: text (not null)
+//   version: text (nullable)
+//   is_active: boolean (nullable, default: true)
+//   performance_notes: text (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
+// Table: autonomous_rules
+//   id: uuid (not null, default: gen_random_uuid())
+//   rule_name: text (not null)
+//   description: text (nullable)
+//   trigger_patterns: _text (nullable)
+//   response_template: text (nullable)
+//   is_active: boolean (nullable, default: true)
+//   priority: integer (nullable, default: 1)
+//   auto_send: boolean (nullable, default: false)
+//   should_close: boolean (nullable, default: false)
+//   usage_count: integer (nullable, default: 0)
+//   last_used_at: timestamp with time zone (nullable)
+//   created_by: uuid (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
+//   updated_at: timestamp with time zone (nullable, default: now())
+// Table: chart_ai_performance
+//   date: date (nullable)
+//   approved: bigint (nullable)
+//   edited: bigint (nullable)
+// Table: chart_conversations_per_day
+//   date: date (nullable)
+//   count: bigint (nullable)
+// Table: chart_status_distribution
+//   status: text (nullable)
+//   count: bigint (nullable)
+// Table: conversation_embeddings
+//   id: uuid (not null, default: gen_random_uuid())
+//   phone_number: text (nullable)
+//   conversation_summary: text (nullable)
+//   conversation_theme: text (nullable)
+//   outcome: text (nullable)
+//   tone: text (nullable)
+//   quality_score: double precision (nullable)
+//   message_count: integer (nullable)
+//   embedding: vector (nullable)
+//   conversation_date: date (nullable, default: CURRENT_DATE)
+//   created_at: timestamp with time zone (nullable, default: now())
+// Table: conversation_finalizers
+//   id: uuid (not null, default: gen_random_uuid())
+//   keyword: text (not null)
+//   is_active: boolean (nullable, default: true)
+//   created_at: timestamp without time zone (nullable, default: now())
+// Table: conversation_status
+//   phone_number: text (nullable)
+//   contact_name: text (nullable)
+//   last_message_at: timestamp with time zone (nullable)
+//   last_message_text: text (nullable)
+//   last_sender: text (nullable)
+//   unread_count: integer (nullable)
+//   status: text (nullable)
+//   status_color: text (nullable)
+// Table: conversations
+//   phone_number: text (not null)
+//   contact_name: text (nullable)
+//   last_message_text: text (nullable)
+//   last_message_at: timestamp with time zone (nullable)
+//   last_sender: text (nullable)
+//   manually_closed: boolean (nullable, default: false)
+//   unread_count: integer (nullable, default: 0)
+//   notes: text (nullable)
+//   tags: _text (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
+//   updated_at: timestamp with time zone (nullable, default: now())
+//   last_execution_id: text (nullable)
+//   remote_jid: text (nullable)
+// Table: dashboard_kpis
+//   avg_response_time: numeric (nullable)
+//   active_conversations: bigint (nullable)
+//   pending_suggestions: bigint (nullable)
+//   ai_approval_rate: numeric (nullable)
+//   messages_today: bigint (nullable)
+//   rules_today: bigint (nullable)
+// Table: messages
+//   id: uuid (not null, default: gen_random_uuid())
+//   phone_number: text (nullable)
+//   sender: text (not null)
+//   message_text: text (nullable)
+//   message_type: text (nullable, default: 'text'::text)
+//   is_audio: boolean (nullable, default: false)
+//   audio_url: text (nullable)
+//   transcription: text (nullable)
+//   media_url: text (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
+//   message_hash: text (nullable)
+//   remote_jid: text (nullable)
+// Table: suggestions
+//   id: uuid (not null, default: gen_random_uuid())
+//   phone_number: text (nullable)
+//   context_messages: jsonb (nullable)
+//   suggestion_text: text (not null)
+//   sent_text: text (nullable)
+//   was_edited: boolean (nullable, default: false)
+//   edit_diff: text (nullable)
+//   approved_at: timestamp with time zone (nullable)
+//   quality_rating: integer (nullable)
+//   use_for_training: boolean (nullable, default: true)
+//   created_at: timestamp with time zone (nullable, default: now())
+//   auto_send: boolean (nullable, default: false)
+//   matched_rule_id: uuid (nullable)
+//   matched_rule_name: text (nullable)
+//   is_gold_standard: boolean (nullable, default: false)
+//   status: text (nullable, default: 'pending'::text)
+// Table: training_feedback
+//   id: uuid (not null, default: gen_random_uuid())
+//   feedback_type: text (nullable)
+//   title: text (nullable)
+//   description: text (nullable)
+//   current_value: text (nullable)
+//   suggested_value: text (nullable)
+//   evidence: jsonb (nullable)
+//   status: text (nullable, default: 'pending'::text)
+//   reviewed_at: timestamp with time zone (nullable)
+//   reviewed_notes: text (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
 
 // --- CONSTRAINTS ---
 // Table: ai_prompts
@@ -663,3 +793,4 @@ export const Constants = {
 // Table: suggestions
 //   CREATE INDEX idx_suggestions_approved ON public.suggestions USING btree (was_edited, use_for_training) WHERE ((sent_text IS NOT NULL) AND (was_edited = false))
 //   CREATE INDEX idx_suggestions_gold_standard ON public.suggestions USING btree (is_gold_standard) WHERE (is_gold_standard = true)
+
