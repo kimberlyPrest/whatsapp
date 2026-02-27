@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase/client'
 
+// Normaliza número de telefone removendo o sufixo JID do WhatsApp (@s.whatsapp.net, @c.us, etc)
+function normalizePhone(phone: string): string {
+  return phone.split('@')[0]
+}
+
 export interface Message {
   id: string
   phone_number: string
@@ -30,40 +35,52 @@ export const whatsappService = {
     const { data, error } = await supabase
       .from('conversation_status')
       .select('*')
-      .order('last_message_at', { ascending: false })
+      .order('last_message_at', { ascending: false, nullsFirst: false });
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+
+    // Deduplica por número base (remove sufixo JID), mantendo a entrada mais recente
+    const seen = new Set<string>();
+    return (data || []).filter((conv) => {
+      const key = normalizePhone(conv.phone_number);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   },
 
   async getMessages(phoneNumber: string) {
+    const base = normalizePhone(phoneNumber);
+    // Busca mensagens com qualquer formato de phone_number (número limpo ou JID do WhatsApp)
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .eq('phone_number', phoneNumber)
-      .order('created_at', { ascending: false })
+      .or(
+        `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`
+      )
+      .order('created_at', { ascending: true });
 
     if (error) throw error
     return data
   },
 
   async sendMessage(phoneNumber: string, text: string) {
-    const { data: userData } = await supabase.auth.getUser()
+    const base = normalizePhone(phoneNumber);
 
-    // 1. Insert message
+    // 1. Insere mensagem sempre com número normalizado
     const { data: message, error: messageError } = await supabase
       .from('messages')
       .insert({
-        phone_number: phoneNumber,
+        phone_number: base,
         sender: 'me',
         message_text: text,
       })
       .select()
-      .single()
+      .single();
 
     if (messageError) throw messageError
 
-    // 2. Update conversation
+    // 2. Atualiza conversa — tenta com número limpo e formato JID
     const { error: convError } = await supabase
       .from('conversations')
       .update({
@@ -71,7 +88,7 @@ export const whatsappService = {
         last_message_at: new Date().toISOString(),
         last_sender: 'me',
       })
-      .eq('phone_number', phoneNumber)
+      .or(`phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`);
 
     if (convError) throw convError
 
@@ -79,14 +96,15 @@ export const whatsappService = {
   },
 
   async getAISuggestion(phoneNumber: string) {
+    const base = normalizePhone(phoneNumber);
     const { data, error } = await supabase
       .from('suggestions')
       .select('*')
-      .eq('phone_number', phoneNumber)
+      .or(`phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`)
       .is('approved_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle()
+      .maybeSingle();
 
     if (error) throw error
     return data
@@ -100,18 +118,15 @@ export const whatsappService = {
     return this.sendFinalMessage(phoneNumber, text, suggestionId)
   },
 
-  async sendFinalMessage(
-    phoneNumber: string,
-    text: string,
-    suggestionId?: string,
-  ) {
+  async sendFinalMessage(phoneNumber: string, text: string, suggestionId?: string) {
+    const base = normalizePhone(phoneNumber);
     const { data, error } = await supabase.functions.invoke('enviar-mensagem', {
       body: {
         suggestion_id: suggestionId,
         final_text: text,
-        phone_number: phoneNumber,
-      },
-    })
+        phone_number: base,
+      }
+    });
 
     if (error) throw error
     return data
@@ -263,18 +278,20 @@ export const whatsappService = {
   },
 
   async closeConversation(phoneNumber: string) {
+    const base = normalizePhone(phoneNumber);
     const { error } = await supabase
       .from('conversations')
       .update({ manually_closed: true })
-      .eq('phone_number', phoneNumber)
-    if (error) throw error
+      .or(`phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`);
+    if (error) throw error;
   },
 
   async reopenConversation(phoneNumber: string) {
+    const base = normalizePhone(phoneNumber);
     const { error } = await supabase
       .from('conversations')
       .update({ manually_closed: false })
-      .eq('phone_number', phoneNumber)
-    if (error) throw error
+      .or(`phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`);
+    if (error) throw error;
   },
 }
