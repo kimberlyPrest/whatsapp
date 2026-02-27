@@ -26,15 +26,27 @@ function getDateLabel(isoDate: string): string {
   const today = new Date()
   const msgDate = new Date(isoDate)
 
-  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const msgDay = new Date(msgDate.getFullYear(), msgDate.getMonth(), msgDate.getDate())
+  const todayDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  )
+  const msgDay = new Date(
+    msgDate.getFullYear(),
+    msgDate.getMonth(),
+    msgDate.getDate(),
+  )
 
   const diffMs = todayDay.getTime() - msgDay.getTime()
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) return 'Hoje'
   if (diffDays === 1) return 'Ontem'
-  return msgDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+  return msgDate.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 function groupMessagesByDate(messages: Message[]) {
@@ -273,19 +285,21 @@ export function ChatWindow({
         }}
       >
         <div className="flex flex-col gap-1">
-          {groupMessagesByDate(messages).map(({ dateLabel, messages: dayMessages }) => (
-            <div key={dateLabel}>
-              {/* Separador de data */}
-              <div className="flex justify-center my-3">
-                <span className="bg-[#E1F2FB] text-[#54656F] text-[11px] font-medium px-3 py-1 rounded-full shadow-sm">
-                  {dateLabel}
-                </span>
+          {groupMessagesByDate(messages).map(
+            ({ dateLabel, messages: dayMessages }) => (
+              <div key={dateLabel}>
+                {/* Separador de data */}
+                <div className="flex justify-center my-3">
+                  <span className="bg-[#E1F2FB] text-[#54656F] text-[11px] font-medium px-3 py-1 rounded-full shadow-sm">
+                    {dateLabel}
+                  </span>
+                </div>
+                {dayMessages.map((msg) => (
+                  <MessageBubble key={msg.id} message={msg} />
+                ))}
               </div>
-              {dayMessages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
-              ))}
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </div>
 
