@@ -140,32 +140,57 @@ export const whatsappService = {
     return data
   },
 
-  async getDashboardStats() {
-    const { data, error } = await supabase
-      .from('dashboard_kpis')
-      .select('*')
-      .single()
+  async getDashboardStats(timeRange: string = 'day') {
+    const { data, error } = await supabase.rpc('get_dashboard_stats', {
+      p_time_range: timeRange,
+    })
 
-    if (error) throw error
-    return data
+    if (error) {
+      console.error('Error fetching dashboard stats from RPC', error)
+      const { data: fallback, error: fbError } = await supabase
+        .from('dashboard_kpis')
+        .select('*')
+        .single()
+      if (fbError) throw fbError
+      return fallback
+    }
+
+    return data && data.length > 0 ? data[0] : null
   },
 
-  async getConversationsPerDay() {
-    const { data, error } = await supabase
-      .from('chart_conversations_per_day')
-      .select('*')
+  async getConversationsPerDay(timeRange: string = 'day') {
+    const { data, error } = await supabase.rpc(
+      'get_chart_conversations_per_day',
+      { p_time_range: timeRange },
+    )
 
-    if (error) throw error
-    return data
+    if (error) {
+      console.error('Error fetching conv per day from RPC', error)
+      const { data: fallback, error: fbError } = await supabase
+        .from('chart_conversations_per_day')
+        .select('*')
+      if (fbError) throw fbError
+      return fallback
+    }
+
+    return data || []
   },
 
-  async getAIPerformance() {
-    const { data, error } = await supabase
-      .from('chart_ai_performance')
-      .select('*')
+  async getAIPerformance(timeRange: string = 'day') {
+    const { data, error } = await supabase.rpc('get_chart_ai_performance', {
+      p_time_range: timeRange,
+    })
 
-    if (error) throw error
-    return data
+    if (error) {
+      console.error('Error fetching AI performance from RPC', error)
+      const { data: fallback, error: fbError } = await supabase
+        .from('chart_ai_performance')
+        .select('*')
+      if (fbError) throw fbError
+      return fallback
+    }
+
+    return data || []
   },
 
   async getStatusDistribution() {
