@@ -37,7 +37,7 @@ import {
   Zap,
   CheckCircle2,
   Clock,
-  TrendingUp,
+  UserCheck,
 } from 'lucide-react'
 import { whatsappService } from '@/lib/services/whatsapp'
 import { useToast } from '@/hooks/use-toast'
@@ -170,7 +170,7 @@ export default function Dashboard() {
         <Card className="border-l-4 border-l-[#111B21]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Mensagens Hoje
+              Mensagens Recebidas Hoje
             </CardTitle>
             <MessageSquare className="h-4 w-4 text-[#111B21]" />
           </CardHeader>
@@ -181,8 +181,10 @@ export default function Dashboard() {
 
         <Card className="border-l-4 border-l-[#7C3AED]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Regras Hoje</CardTitle>
-            <TrendingUp className="h-4 w-4 text-[#7C3AED]" />
+            <CardTitle className="text-sm font-medium">
+              Clientes Atendidos Hoje
+            </CardTitle>
+            <UserCheck className="h-4 w-4 text-[#7C3AED]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.rules_today}</div>
