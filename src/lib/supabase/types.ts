@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: '14.1'
   }
   public: {
     Tables: {
@@ -138,18 +138,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "conversation_embeddings_phone_number_fkey"
-            columns: ["phone_number"]
+            foreignKeyName: 'conversation_embeddings_phone_number_fkey'
+            columns: ['phone_number']
             isOneToOne: false
-            referencedRelation: "conversation_status"
-            referencedColumns: ["phone_number"]
+            referencedRelation: 'conversation_status'
+            referencedColumns: ['phone_number']
           },
           {
-            foreignKeyName: "conversation_embeddings_phone_number_fkey"
-            columns: ["phone_number"]
+            foreignKeyName: 'conversation_embeddings_phone_number_fkey'
+            columns: ['phone_number']
             isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["phone_number"]
+            referencedRelation: 'conversations'
+            referencedColumns: ['phone_number']
           },
         ]
       }
@@ -267,18 +267,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "messages_phone_number_fkey"
-            columns: ["phone_number"]
+            foreignKeyName: 'messages_phone_number_fkey'
+            columns: ['phone_number']
             isOneToOne: false
-            referencedRelation: "conversation_status"
-            referencedColumns: ["phone_number"]
+            referencedRelation: 'conversation_status'
+            referencedColumns: ['phone_number']
           },
           {
-            foreignKeyName: "messages_phone_number_fkey"
-            columns: ["phone_number"]
+            foreignKeyName: 'messages_phone_number_fkey'
+            columns: ['phone_number']
             isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["phone_number"]
+            referencedRelation: 'conversations'
+            referencedColumns: ['phone_number']
           },
         ]
       }
@@ -339,25 +339,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "suggestions_matched_rule_id_fkey"
-            columns: ["matched_rule_id"]
+            foreignKeyName: 'suggestions_matched_rule_id_fkey'
+            columns: ['matched_rule_id']
             isOneToOne: false
-            referencedRelation: "autonomous_rules"
-            referencedColumns: ["id"]
+            referencedRelation: 'autonomous_rules'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "suggestions_phone_number_fkey"
-            columns: ["phone_number"]
+            foreignKeyName: 'suggestions_phone_number_fkey'
+            columns: ['phone_number']
             isOneToOne: false
-            referencedRelation: "conversation_status"
-            referencedColumns: ["phone_number"]
+            referencedRelation: 'conversation_status'
+            referencedColumns: ['phone_number']
           },
           {
-            foreignKeyName: "suggestions_phone_number_fkey"
-            columns: ["phone_number"]
+            foreignKeyName: 'suggestions_phone_number_fkey'
+            columns: ['phone_number']
             isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["phone_number"]
+            referencedRelation: 'conversations'
+            referencedColumns: ['phone_number']
           },
         ]
       }
@@ -489,33 +489,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -524,23 +524,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -549,23 +549,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -574,36 +574,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -611,7 +611,6 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -816,9 +815,9 @@ export const Constants = {
 //     ELSE
 //       v_start_date := CURRENT_DATE - INTERVAL '7 days';
 //     END IF;
-//   
+//
 //     RETURN QUERY
-//     SELECT 
+//     SELECT
 //       s.created_at::date AS date,
 //       COUNT(*) FILTER (WHERE s.was_edited = false) AS approved,
 //       COUNT(*) FILTER (WHERE s.was_edited = true) AS edited
@@ -828,7 +827,7 @@ export const Constants = {
 //     ORDER BY s.created_at::date ASC;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION get_chart_conversations_per_day(text)
 //   CREATE OR REPLACE FUNCTION public.get_chart_conversations_per_day(p_time_range text DEFAULT 'day'::text)
 //    RETURNS TABLE(date date, count bigint)
@@ -844,9 +843,9 @@ export const Constants = {
 //       -- For 'day' and 'week', we show 7 days of context
 //       v_start_date := CURRENT_DATE - INTERVAL '7 days';
 //     END IF;
-//   
+//
 //     RETURN QUERY
-//     SELECT 
+//     SELECT
 //       m.created_at::date AS date,
 //       COUNT(DISTINCT m.phone_number) AS count
 //     FROM public.messages m
@@ -855,7 +854,7 @@ export const Constants = {
 //     ORDER BY m.created_at::date ASC;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION get_dashboard_stats(text)
 //   CREATE OR REPLACE FUNCTION public.get_dashboard_stats(p_time_range text DEFAULT 'day'::text)
 //    RETURNS TABLE(avg_response_time numeric, active_conversations bigint, pending_suggestions bigint, ai_approval_rate numeric, messages_received bigint, clients_served bigint)
@@ -873,43 +872,43 @@ export const Constants = {
 //       -- 'day'
 //       v_start_date := CURRENT_DATE;
 //     END IF;
-//   
+//
 //     RETURN QUERY
 //     SELECT
 //       (
 //         SELECT COALESCE(EXTRACT(EPOCH FROM AVG(diff)), 0)::numeric
 //         FROM (
-//           SELECT 
+//           SELECT
 //             m2.created_at - m1.created_at AS diff
 //           FROM public.messages m1
-//           JOIN public.messages m2 ON m1.phone_number = m2.phone_number 
-//             AND m2.sender = 'me' 
-//             AND m1.sender != 'me' 
+//           JOIN public.messages m2 ON m1.phone_number = m2.phone_number
+//             AND m2.sender = 'me'
+//             AND m1.sender != 'me'
 //             AND m2.created_at > m1.created_at
 //             AND m2.created_at <= m1.created_at + INTERVAL '1 hour'
 //           WHERE m1.created_at >= v_start_date
 //         ) sub
 //       ) AS avg_response_time,
-//       
+//
 //       (SELECT COUNT(*) FROM public.conversations WHERE manually_closed = false) AS active_conversations,
-//       
+//
 //       (SELECT COUNT(*) FROM public.suggestions WHERE approved_at IS NULL) AS pending_suggestions,
-//       
-//       (SELECT 
+//
+//       (SELECT
 //          COALESCE(
-//            (COUNT(*) FILTER (WHERE was_edited = false)::numeric / NULLIF(COUNT(*), 0)) * 100, 
+//            (COUNT(*) FILTER (WHERE was_edited = false)::numeric / NULLIF(COUNT(*), 0)) * 100,
 //            0
 //          )
-//        FROM public.suggestions 
+//        FROM public.suggestions
 //        WHERE sent_text IS NOT NULL AND created_at >= v_start_date
 //       ) AS ai_approval_rate,
-//   
+//
 //       (SELECT COUNT(*) FROM public.messages WHERE sender != 'me' AND created_at >= v_start_date) AS messages_received,
-//   
+//
 //       (SELECT COUNT(DISTINCT phone_number) FROM public.messages WHERE created_at >= v_start_date) AS clients_served;
 //   END;
 //   $function$
-//   
+//
 
 // --- INDEXES ---
 // Table: autonomous_rules
@@ -928,4 +927,3 @@ export const Constants = {
 // Table: suggestions
 //   CREATE INDEX idx_suggestions_approved ON public.suggestions USING btree (was_edited, use_for_training) WHERE ((sent_text IS NOT NULL) AND (was_edited = false))
 //   CREATE INDEX idx_suggestions_gold_standard ON public.suggestions USING btree (is_gold_standard) WHERE (is_gold_standard = true)
-

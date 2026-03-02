@@ -140,54 +140,46 @@ export const whatsappService = {
     return data
   },
 
-  async getDashboardStats(timeRange: string = 'day') {
+  async getDashboardStats(startDate: Date, endDate: Date) {
     const { data, error } = await supabase.rpc('get_dashboard_stats', {
-      p_time_range: timeRange,
+      p_start_date: startDate.toISOString(),
+      p_end_date: endDate.toISOString(),
     })
 
     if (error) {
       console.error('Error fetching dashboard stats from RPC', error)
-      const { data: fallback, error: fbError } = await supabase
-        .from('dashboard_kpis')
-        .select('*')
-        .single()
-      if (fbError) throw fbError
-      return fallback
+      return null
     }
 
     return data && data.length > 0 ? data[0] : null
   },
 
-  async getConversationsPerDay(timeRange: string = 'day') {
+  async getConversationsPerDay(startDate: Date, endDate: Date) {
     const { data, error } = await supabase.rpc(
       'get_chart_conversations_per_day',
-      { p_time_range: timeRange },
+      {
+        p_start_date: startDate.toISOString(),
+        p_end_date: endDate.toISOString(),
+      },
     )
 
     if (error) {
       console.error('Error fetching conv per day from RPC', error)
-      const { data: fallback, error: fbError } = await supabase
-        .from('chart_conversations_per_day')
-        .select('*')
-      if (fbError) throw fbError
-      return fallback
+      return []
     }
 
     return data || []
   },
 
-  async getAIPerformance(timeRange: string = 'day') {
+  async getAIPerformance(startDate: Date, endDate: Date) {
     const { data, error } = await supabase.rpc('get_chart_ai_performance', {
-      p_time_range: timeRange,
+      p_start_date: startDate.toISOString(),
+      p_end_date: endDate.toISOString(),
     })
 
     if (error) {
       console.error('Error fetching AI performance from RPC', error)
-      const { data: fallback, error: fbError } = await supabase
-        .from('chart_ai_performance')
-        .select('*')
-      if (fbError) throw fbError
-      return fallback
+      return []
     }
 
     return data || []
