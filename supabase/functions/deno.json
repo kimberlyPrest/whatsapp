@@ -1,5 +1,6 @@
 {
   "_versions": {
-    "enviar-mensagem": 7
+    "enviar-mensagem": 7,
+    "functions": 1
   }
 }
