@@ -1,6 +1,8 @@
 {
   "_versions": {
-    "enviar-mensagem": 7,
+    "enviar-mensagem": 8,
+    "webhook-evolution": 1,
+    "processar-sugestao": 1,
     "functions": 1
   }
 }
