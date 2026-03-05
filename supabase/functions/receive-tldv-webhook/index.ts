@@ -21,11 +21,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tldv-signature',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-tldv-signature',
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS')
+    return new Response('ok', { headers: corsHeaders })
 
   try {
     const secret = Deno.env.get('TLDV_WEBHOOK_SECRET')
@@ -49,23 +51,32 @@ Deno.serve(async (req) => {
       body.title ?? body.meeting?.title ?? body.name ?? 'Reunião sem título'
 
     const tldvLink: string =
-      body.share_url ?? body.url ?? body.meeting?.share_url ?? body.meeting?.url ?? ''
+      body.share_url ??
+      body.url ??
+      body.meeting?.share_url ??
+      body.meeting?.url ??
+      ''
 
     if (!tldvLink) {
-      return new Response(JSON.stringify({ error: 'tldv_link não encontrado no payload' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ error: 'tldv_link não encontrado no payload' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     const transcript: string =
       body.transcript ?? body.transcription ?? body.meeting?.transcript ?? ''
 
-    const summary: string =
-      body.summary ?? body.meeting?.summary ?? ''
+    const summary: string = body.summary ?? body.meeting?.summary ?? ''
 
     const meetingDate: string =
-      body.started_at ?? body.date ?? body.meeting?.started_at ?? new Date().toISOString()
+      body.started_at ??
+      body.date ??
+      body.meeting?.started_at ??
+      new Date().toISOString()
 
     // Extrai emails dos participantes
     const participants: any[] =
@@ -121,10 +132,16 @@ Deno.serve(async (req) => {
         .eq('phone_number', linkedPhoneNumber)
     }
 
-    console.log(`✅ TL.DV reunião recebida: "${meetingTitle}" | phone: ${linkedPhoneNumber ?? 'não vinculado'} | emails: ${participantEmails.join(', ')}`)
+    console.log(
+      `✅ TL.DV reunião recebida: "${meetingTitle}" | phone: ${linkedPhoneNumber ?? 'não vinculado'} | emails: ${participantEmails.join(', ')}`,
+    )
 
     return new Response(
-      JSON.stringify({ success: true, meeting_id: meeting.id, linked_phone: linkedPhoneNumber }),
+      JSON.stringify({
+        success: true,
+        meeting_id: meeting.id,
+        linked_phone: linkedPhoneNumber,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {

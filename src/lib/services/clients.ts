@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabase/client'
 
-export const TIPOS_OPTIONS = ['Elite', 'Scale', 'Skip', 'Rec Onboar', 'Vendas'] as const
-export type TipoCliente = typeof TIPOS_OPTIONS[number]
+export const TIPOS_OPTIONS = [
+  'Elite',
+  'Scale',
+  'Skip',
+  'Rec Onboar',
+  'Vendas',
+] as const
+export type TipoCliente = (typeof TIPOS_OPTIONS)[number]
 
 export interface ClientProfile {
   id: string
@@ -45,7 +51,9 @@ export const clientsService = {
 
     const { data: convStatus, error: convErr } = await supabase
       .from('conversation_status')
-      .select('phone_number, last_message_at, status, status_color, unread_count')
+      .select(
+        'phone_number, last_message_at, status, status_color, unread_count',
+      )
 
     if (convErr) throw convErr
 
@@ -72,7 +80,11 @@ export const clientsService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return (data ?? []).map((p) => ({ ...p, tipos: p.tipos ?? [], tags: p.tags ?? [] }))
+    return (data ?? []).map((p) => ({
+      ...p,
+      tipos: p.tipos ?? [],
+      tags: p.tags ?? [],
+    }))
   },
 
   async getClientProfile(phoneNumber: string): Promise<ClientProfile | null> {
@@ -89,7 +101,17 @@ export const clientsService = {
 
   async updateClient(
     phoneNumber: string,
-    updates: Partial<Pick<ClientProfile, 'contact_name' | 'email' | 'tipos' | 'tags' | 'tldv_link' | 'observations'>>,
+    updates: Partial<
+      Pick<
+        ClientProfile,
+        | 'contact_name'
+        | 'email'
+        | 'tipos'
+        | 'tags'
+        | 'tldv_link'
+        | 'observations'
+      >
+    >,
   ): Promise<ClientProfile> {
     const { data, error } = await supabase
       .from('client_profiles')
@@ -110,6 +132,9 @@ export const clientsService = {
       .order('meeting_date', { ascending: false })
 
     if (error) throw error
-    return (data ?? []).map((m) => ({ ...m, participant_emails: m.participant_emails ?? [] }))
+    return (data ?? []).map((m) => ({
+      ...m,
+      participant_emails: m.participant_emails ?? [],
+    }))
   },
 }

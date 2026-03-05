@@ -23,14 +23,20 @@ export function ValidarSection({ clients, onEdit }: ValidarSectionProps) {
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600" />
           <span className="text-sm font-semibold text-amber-800">Validar</span>
-          <Badge className="bg-amber-600 text-white text-xs h-5 px-1.5">{clients.length}</Badge>
+          <Badge className="bg-amber-600 text-white text-xs h-5 px-1.5">
+            {clients.length}
+          </Badge>
           <span className="text-xs text-amber-600">
-            {clients.length === 1 ? 'cliente sem dados completos' : 'clientes sem dados completos'}
+            {clients.length === 1
+              ? 'cliente sem dados completos'
+              : 'clientes sem dados completos'}
           </span>
         </div>
-        {expanded
-          ? <ChevronUp className="w-4 h-4 text-amber-600" />
-          : <ChevronDown className="w-4 h-4 text-amber-600" />}
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-amber-600" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-amber-600" />
+        )}
       </button>
 
       {expanded && (
@@ -42,9 +48,13 @@ export function ValidarSection({ clients, onEdit }: ValidarSectionProps) {
             >
               <div className="min-w-0">
                 <div className="text-sm font-medium text-[#111B21] truncate">
-                  {client.contact_name ?? <span className="text-[#667781] italic">Sem nome</span>}
+                  {client.contact_name ?? (
+                    <span className="text-[#667781] italic">Sem nome</span>
+                  )}
                 </div>
-                <div className="text-xs text-[#667781] truncate">{client.phone_number}</div>
+                <div className="text-xs text-[#667781] truncate">
+                  {client.phone_number}
+                </div>
                 <div className="flex gap-1 mt-1 flex-wrap">
                   {!client.contact_name && (
                     <span className="text-xs text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">

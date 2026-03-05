@@ -9,7 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { clientsService, TIPOS_OPTIONS, type ClientProfile } from '@/lib/services/clients'
+import {
+  clientsService,
+  TIPOS_OPTIONS,
+  type ClientProfile,
+} from '@/lib/services/clients'
 import { ClientsTable } from '@/components/clients/ClientsTable'
 import { ClientModal } from '@/components/clients/ClientModal'
 import { ValidarSection } from '@/components/clients/ValidarSection'
@@ -22,7 +26,9 @@ export default function Clients() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [tipoFilter, setTipoFilter] = useState<string>('Todos')
-  const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null)
+  const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(
+    null,
+  )
   const [modalOpen, setModalOpen] = useState(false)
 
   const loadData = async () => {
@@ -35,7 +41,11 @@ export default function Clients() {
       setClients(allClients)
       setToValidate(invalidClients)
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao carregar clientes' })
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao carregar clientes',
+      })
     } finally {
       setLoading(false)
     }
@@ -49,7 +59,9 @@ export default function Clients() {
     return clients.filter((c) => {
       const matchesSearch =
         !searchTerm ||
-        (c.contact_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.contact_name ?? '')
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
         c.phone_number.includes(searchTerm)
 
       const matchesTipo =
@@ -71,7 +83,6 @@ export default function Clients() {
   return (
     <div className="flex flex-col h-full bg-[#F0F2F5] overflow-y-auto">
       <div className="max-w-7xl mx-auto w-full px-6 py-6 space-y-6">
-
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -81,7 +92,9 @@ export default function Clients() {
             <div>
               <h1 className="text-xl font-bold text-[#111B21]">Clientes</h1>
               <p className="text-sm text-[#667781]">
-                {loading ? '…' : `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`}
+                {loading
+                  ? '…'
+                  : `${clients.length} cliente${clients.length !== 1 ? 's' : ''}`}
               </p>
             </div>
           </div>

@@ -14,7 +14,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
 }
 
 // Remove sufixo JID do WhatsApp (@s.whatsapp.net, @c.us, etc.)
@@ -23,7 +24,10 @@ function normalizePhone(jid: string): string {
 }
 
 // Transcreve áudio usando Gemini multimodal
-async function transcribeAudio(audioUrl: string, geminiKey: string): Promise<string> {
+async function transcribeAudio(
+  audioUrl: string,
+  geminiKey: string,
+): Promise<string> {
   try {
     const audioRes = await fetch(audioUrl)
     if (!audioRes.ok) return ''
@@ -31,7 +35,8 @@ async function transcribeAudio(audioUrl: string, geminiKey: string): Promise<str
     const audioBuffer = await audioRes.arrayBuffer()
     const bytes = new Uint8Array(audioBuffer)
     let binary = ''
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    for (let i = 0; i < bytes.length; i++)
+      binary += String.fromCharCode(bytes[i])
     const base64Audio = btoa(binary)
 
     const res = await fetch(
@@ -44,7 +49,9 @@ async function transcribeAudio(audioUrl: string, geminiKey: string): Promise<str
             {
               parts: [
                 { inlineData: { mimeType: 'audio/ogg', data: base64Audio } },
-                { text: 'Transcreva este áudio em português. Retorne apenas o texto transcrito, sem explicações.' },
+                {
+                  text: 'Transcreva este áudio em português. Retorne apenas o texto transcrito, sem explicações.',
+                },
               ],
             },
           ],
@@ -60,7 +67,8 @@ async function transcribeAudio(audioUrl: string, geminiKey: string): Promise<str
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS')
+    return new Response('ok', { headers: corsHeaders })
 
   try {
     const body = await req.json()
@@ -70,9 +78,12 @@ Deno.serve(async (req) => {
 
     // Processar apenas eventos de mensagens novas (messages.upsert / MESSAGES_UPSERT)
     if (!event.includes('upsert')) {
-      return new Response(JSON.stringify({ skip: true, reason: `Evento ignorado: ${event}` }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ skip: true, reason: `Evento ignorado: ${event}` }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     const data = body.data ?? {}
@@ -80,9 +91,12 @@ Deno.serve(async (req) => {
 
     // Ignorar mensagens enviadas por nós mesmos
     if (key.fromMe === true) {
-      return new Response(JSON.stringify({ skip: true, reason: 'Mensagem própria (fromMe)' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ skip: true, reason: 'Mensagem própria (fromMe)' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     const remoteJid: string = key.remoteJid ?? ''
@@ -98,9 +112,11 @@ Deno.serve(async (req) => {
 
     const msg = data.message ?? {}
     const messageType: string = data.messageType ?? 'conversation'
-    const isAudio = messageType === 'audioMessage' || messageType === 'pttMessage'
+    const isAudio =
+      messageType === 'audioMessage' || messageType === 'pttMessage'
     const contactName: string = data.pushName ?? 'Desconhecido'
-    const rawTimestamp: number = data.messageTimestamp ?? Math.floor(Date.now() / 1000)
+    const rawTimestamp: number =
+      data.messageTimestamp ?? Math.floor(Date.now() / 1000)
     const timestamp = new Date(rawTimestamp * 1000).toISOString()
 
     // Extrai texto da mensagem

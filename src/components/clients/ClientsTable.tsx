@@ -53,7 +53,8 @@ export function ClientsTable({ clients, onEdit }: ClientsTableProps) {
         </thead>
         <tbody className="divide-y divide-[#F0F2F5]">
           {clients.map((client) => {
-            const isIncomplete = !client.contact_name || !client.tipos || client.tipos.length === 0
+            const isIncomplete =
+              !client.contact_name || !client.tipos || client.tipos.length === 0
             return (
               <tr
                 key={client.phone_number}
@@ -64,12 +65,22 @@ export function ClientsTable({ clients, onEdit }: ClientsTableProps) {
                   <div className="flex items-center gap-2">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                      style={{ backgroundColor: phoneToColor(client.phone_number) }}
+                      style={{
+                        backgroundColor: phoneToColor(client.phone_number),
+                      }}
                     >
-                      {(client.contact_name ?? client.phone_number).slice(0, 2).toUpperCase()}
+                      {(client.contact_name ?? client.phone_number)
+                        .slice(0, 2)
+                        .toUpperCase()}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className={!client.contact_name ? 'text-[#667781] italic' : 'text-[#111B21] font-medium'}>
+                      <span
+                        className={
+                          !client.contact_name
+                            ? 'text-[#667781] italic'
+                            : 'text-[#111B21] font-medium'
+                        }
+                      >
                         {client.contact_name ?? 'Sem nome'}
                       </span>
                       {isIncomplete && (
@@ -101,12 +112,18 @@ export function ClientsTable({ clients, onEdit }: ClientsTableProps) {
                   {client.tags && client.tags.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {client.tags.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs py-0 px-1.5">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs py-0 px-1.5"
+                        >
                           {tag}
                         </Badge>
                       ))}
                       {client.tags.length > 3 && (
-                        <span className="text-xs text-[#667781]">+{client.tags.length - 3}</span>
+                        <span className="text-xs text-[#667781]">
+                          +{client.tags.length - 3}
+                        </span>
                       )}
                     </div>
                   ) : (
@@ -145,10 +162,19 @@ export function ClientsTable({ clients, onEdit }: ClientsTableProps) {
 
 function phoneToColor(phone: string): string {
   const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#82E0AA',
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEAA7',
+    '#DDA0DD',
+    '#98D8C8',
+    '#F7DC6F',
+    '#BB8FCE',
+    '#82E0AA',
   ]
   let hash = 0
-  for (let i = 0; i < phone.length; i++) hash = phone.charCodeAt(i) + ((hash << 5) - hash)
+  for (let i = 0; i < phone.length; i++)
+    hash = phone.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]
 }

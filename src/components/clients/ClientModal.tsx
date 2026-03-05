@@ -12,7 +12,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ExternalLink, MessageCircle, Loader2, Video, X } from 'lucide-react'
-import { clientsService, TIPOS_OPTIONS, type ClientProfile, type TldvMeeting } from '@/lib/services/clients'
+import {
+  clientsService,
+  TIPOS_OPTIONS,
+  type ClientProfile,
+  type TldvMeeting,
+} from '@/lib/services/clients'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -24,7 +29,12 @@ interface ClientModalProps {
   onSaved: () => void
 }
 
-export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps) {
+export function ClientModal({
+  client,
+  open,
+  onClose,
+  onSaved,
+}: ClientModalProps) {
   const navigate = useNavigate()
   const { toast } = useToast()
 
@@ -98,7 +108,8 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
     setTagInput('')
   }
 
-  const removeTag = (tag: string) => setTags((prev) => prev.filter((t) => t !== tag))
+  const removeTag = (tag: string) =>
+    setTags((prev) => prev.filter((t) => t !== tag))
 
   const handleOpenWhatsApp = () => {
     if (!client) return
@@ -125,18 +136,25 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
               style={{ backgroundColor: phoneToColor(client.phone_number) }}
             >
-              {(client.contact_name ?? client.phone_number).slice(0, 2).toUpperCase()}
+              {(client.contact_name ?? client.phone_number)
+                .slice(0, 2)
+                .toUpperCase()}
             </div>
             <div>
               <div className="text-base font-semibold text-[#111B21]">
                 {client.contact_name ?? 'Sem nome'}
               </div>
-              <div className="text-sm text-[#667781] font-normal">{client.phone_number}</div>
+              <div className="text-sm text-[#667781] font-normal">
+                {client.phone_number}
+              </div>
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="dados" onValueChange={(v) => v === 'reunioes' && loadMeetings()}>
+        <Tabs
+          defaultValue="dados"
+          onValueChange={(v) => v === 'reunioes' && loadMeetings()}
+        >
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="reunioes">Reuniões TL.DV</TabsTrigger>
@@ -147,7 +165,9 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
           <TabsContent value="dados" className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[#667781]">Nome</label>
+                <label className="text-xs font-medium text-[#667781]">
+                  Nome
+                </label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -155,7 +175,9 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-[#667781]">Email</label>
+                <label className="text-xs font-medium text-[#667781]">
+                  Email
+                </label>
                 <Input
                   type="email"
                   value={email}
@@ -190,7 +212,9 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
                 <Input
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  onKeyDown={(e) =>
+                    e.key === 'Enter' && (e.preventDefault(), addTag())
+                  }
                   placeholder="Adicionar tag e pressionar Enter"
                   className="flex-1"
                 />
@@ -220,7 +244,9 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[#667781]">Link TL.DV</label>
+              <label className="text-xs font-medium text-[#667781]">
+                Link TL.DV
+              </label>
               <div className="flex gap-2">
                 <Input
                   value={tldvLink}
@@ -244,7 +270,9 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[#667781]">Observações</label>
+              <label className="text-xs font-medium text-[#667781]">
+                Observações
+              </label>
               <Textarea
                 value={observations}
                 onChange={(e) => setObservations(e.target.value)}
@@ -277,8 +305,8 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
                 <Video className="w-8 h-8 opacity-40" />
                 <p className="text-sm">Nenhuma reunião vinculada</p>
                 <p className="text-xs text-center max-w-xs">
-                  As reuniões são vinculadas automaticamente pelo email do participante quando o
-                  TL.DV envia o webhook.
+                  As reuniões são vinculadas automaticamente pelo email do
+                  participante quando o TL.DV envia o webhook.
                 </p>
               </div>
             ) : (
@@ -294,11 +322,17 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
                       </div>
                       {m.meeting_date && (
                         <div className="text-xs text-[#667781] mt-0.5">
-                          {format(new Date(m.meeting_date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                          {format(
+                            new Date(m.meeting_date),
+                            "d 'de' MMMM 'de' yyyy",
+                            { locale: ptBR },
+                          )}
                         </div>
                       )}
                       {m.summary && (
-                        <p className="text-xs text-[#667781] mt-1 line-clamp-2">{m.summary}</p>
+                        <p className="text-xs text-[#667781] mt-1 line-clamp-2">
+                          {m.summary}
+                        </p>
                       )}
                     </div>
                     <a
@@ -307,7 +341,11 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
                       rel="noopener noreferrer"
                       className="shrink-0"
                     >
-                      <Button variant="outline" size="sm" className="text-xs gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs gap-1"
+                      >
                         <ExternalLink className="w-3 h-3" />
                         Abrir
                       </Button>
@@ -328,7 +366,9 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
                 <p className="text-sm font-medium text-[#111B21]">
                   {client.contact_name ?? client.phone_number}
                 </p>
-                <p className="text-xs text-[#667781] mt-1">{client.phone_number}</p>
+                <p className="text-xs text-[#667781] mt-1">
+                  {client.phone_number}
+                </p>
               </div>
               <Button
                 onClick={handleOpenWhatsApp}
@@ -348,10 +388,19 @@ export function ClientModal({ client, open, onClose, onSaved }: ClientModalProps
 // Gera cor consistente a partir do número de telefone
 function phoneToColor(phone: string): string {
   const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#82E0AA',
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEAA7',
+    '#DDA0DD',
+    '#98D8C8',
+    '#F7DC6F',
+    '#BB8FCE',
+    '#82E0AA',
   ]
   let hash = 0
-  for (let i = 0; i < phone.length; i++) hash = phone.charCodeAt(i) + ((hash << 5) - hash)
+  for (let i = 0; i < phone.length; i++)
+    hash = phone.charCodeAt(i) + ((hash << 5) - hash)
   return colors[Math.abs(hash) % colors.length]
 }
