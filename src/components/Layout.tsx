@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   BrainCircuit,
   Settings,
+  Users,
 } from 'lucide-react'
 
 const Layout = () => {
@@ -51,6 +52,14 @@ const Layout = () => {
             >
               <MessageCircle className="w-4 h-4 mr-2" />
               Conversas
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/clientes')}
+              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Clientes
             </Button>
             <Button
               variant="ghost"
