@@ -92,17 +92,19 @@ Deno.serve(async (req) => {
     )
 
     // Busca client_profile pelo email dos participantes
+    let linkedClientId: string | null = null
     let linkedPhoneNumber: string | null = null
 
     if (participantEmails.length > 0) {
       const { data: matchedProfile } = await supabase
         .from('client_profiles')
-        .select('phone_number')
+        .select('id, phone_number')
         .in('email', participantEmails)
         .limit(1)
         .maybeSingle()
 
       if (matchedProfile) {
+        linkedClientId = matchedProfile.id
         linkedPhoneNumber = matchedProfile.phone_number
       }
     }
@@ -111,6 +113,7 @@ Deno.serve(async (req) => {
     const { data: meeting, error: meetingErr } = await supabase
       .from('tldv_meetings')
       .insert({
+        client_id: linkedClientId,
         phone_number: linkedPhoneNumber,
         meeting_title: meetingTitle,
         tldv_link: tldvLink,

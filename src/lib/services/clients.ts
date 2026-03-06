@@ -25,6 +25,16 @@ export interface ClientProfile {
   status?: string | null
   status_color?: string | null
   unread_count?: number
+  // novos campos da tabela meus_clientes
+  etapa_negocio?: string | null
+  propriedade?: boolean
+  // call dates e links (resumo para interface)
+  call_1_date?: string | null
+  call_1_link?: string | null
+  call_2_date?: string | null
+  call_2_link?: string | null
+  csat_1?: number | null
+  csat_comment_1?: string | null
 }
 
 export interface TldvMeeting {
@@ -96,7 +106,20 @@ export const clientsService = {
 
     if (error) throw error
     if (!data) return null
-    return { ...data, tipos: data.tipos ?? [], tags: data.tags ?? [] }
+
+    // Busca dados extras de meus_clientes
+    const { data: mc } = await supabase
+      .from('meus_clientes')
+      .select('*')
+      .eq('client_id', data.id)
+      .maybeSingle()
+
+    return {
+      ...data,
+      tipos: data.tipos ?? [],
+      tags: data.tags ?? [],
+      ...mc
+    }
   },
 
   async updateClient(
@@ -110,17 +133,35 @@ export const clientsService = {
         | 'tags'
         | 'tldv_link'
         | 'observations'
+        | 'etapa_negocio'
       >
     >,
   ): Promise<ClientProfile> {
+    // 1. Atualiza client_profiles
+    const cpFields = ['contact_name', 'email', 'tipos', 'tags', 'tldv_link', 'observations']
+    const cpUpdates: any = { updated_at: new Date().toISOString() }
+    Object.keys(updates).forEach(k => { if (cpFields.includes(k)) cpUpdates[k] = (updates as any)[k] })
+
     const { data, error } = await supabase
       .from('client_profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(cpUpdates)
       .eq('phone_number', phoneNumber)
       .select()
       .single()
 
     if (error) throw error
+
+    // 2. Atualiza meus_clientes (etapa_negocio) se necessário
+    if (updates.etapa_negocio !== undefined) {
+      await supabase
+        .from('meus_clientes')
+        .upsert({
+          client_id: data.id,
+          etapa_negocio: updates.etapa_negocio,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'client_id' })
+    }
+
     return { ...data, tipos: data.tipos ?? [], tags: data.tags ?? [] }
   },
 

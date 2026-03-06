@@ -31,7 +31,7 @@ function normalizePhone(jid: string): string {
 // ─── Links de agendamento por produto ────────────────────────────────────────
 
 const BOOKING_LINKS: Record<string, string> = {
-  Elite: 'https://meetings.hubspot.com/kimberly-prestes/skip',
+  Elite: 'https://meetings.hubspot.com/kimberly-prestes/elite',
   Scale: 'https://meetings.hubspot.com/kimberly-prestes/elite',
   Skip: 'https://meetings.hubspot.com/kimberly-prestes/skip',
   Skio: 'https://meetings.hubspot.com/kimberly-prestes/skip',

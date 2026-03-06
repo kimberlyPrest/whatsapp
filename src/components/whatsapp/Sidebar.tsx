@@ -1,7 +1,6 @@
-import { useState } from 'react'
 import { Search, MoreVertical, MessageSquare, CircleDashed } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import {
@@ -10,7 +9,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ConversationItem } from './ConversationItem'
-import { Conversation, ConversationStatus } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -52,7 +50,6 @@ export function Sidebar({
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-[#F0F2F5] shrink-0 h-[60px]">
         <Avatar className="cursor-pointer hover:opacity-80 transition-opacity">
-          <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=99" />
           <AvatarFallback>OP</AvatarFallback>
         </Avatar>
 
