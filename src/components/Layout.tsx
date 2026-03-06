@@ -1,4 +1,4 @@
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import {
   Sidebar,
@@ -11,7 +11,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import {
   MessageCircle,
   LayoutDashboard,
@@ -20,13 +28,23 @@ import {
   Users,
   LogOut,
   User,
+  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Conversas', icon: MessageCircle, path: '/whatsapp' },
-  { name: 'Clientes', icon: Users, path: '/clientes' },
+  {
+    name: 'Contatos',
+    icon: Users,
+    path: '/contatos',
+    subItems: [
+      { name: 'Meus Clientes', path: '/contatos/clientes' },
+      { name: 'Vendas', path: '/contatos/vendas' },
+      { name: 'Para Validar', path: '/contatos/validar' },
+    ],
+  },
   { name: 'Agente IA', icon: BrainCircuit, path: '/agente-ia' },
   { name: 'Configurações', icon: Settings, path: '/settings' },
 ]
@@ -62,6 +80,63 @@ export default function Layout() {
           <SidebarMenu className="gap-2">
             {navItems.map((item) => {
               const isActive = location.pathname.startsWith(item.path)
+
+              if (item.subItems) {
+                return (
+                  <Collapsible
+                    key={item.path}
+                    asChild
+                    defaultOpen={isActive}
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                          tooltip={item.name}
+                          isActive={isActive}
+                          className={cn(
+                            'h-10 cursor-pointer rounded-lg transition-colors',
+                            isActive
+                              ? 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 hover:text-[#25D366] font-medium'
+                              : 'text-[#667781] hover:bg-[#F0F2F5] hover:text-[#111B21]',
+                          )}
+                        >
+                          <div className="flex items-center gap-3 w-full">
+                            <item.icon
+                              className={cn(
+                                'w-5 h-5 shrink-0',
+                                isActive ? 'text-[#25D366]' : 'text-[#667781]',
+                              )}
+                            />
+                            <span className="truncate">{item.name}</span>
+                            <ChevronRight className="ml-auto w-4 h-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          </div>
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.subItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.path}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={location.pathname === subItem.path}
+                                className={cn(
+                                  location.pathname === subItem.path
+                                    ? 'bg-[#25D366]/10 text-[#25D366] font-medium'
+                                    : 'text-[#667781] hover:text-[#111B21]',
+                                )}
+                              >
+                                <Link to={subItem.path}>{subItem.name}</Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )
+              }
+
               return (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton

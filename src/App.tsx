@@ -8,7 +8,9 @@ import WhatsApp from './pages/WhatsApp'
 import Dashboard from './pages/Dashboard'
 import AIAgent from './pages/AIAgent'
 import SettingsPage from './pages/Settings'
-import Clients from './pages/Clients'
+import ContatosClientes from './pages/Contacts/Clientes'
+import ContatosVendas from './pages/Contacts/Vendas'
+import ContatosValidar from './pages/Contacts/Validar'
 import Layout from './components/Layout'
 
 import { AuthProvider } from './hooks/use-auth'
@@ -33,7 +35,15 @@ const App = () => (
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/whatsapp" element={<WhatsApp />} />
-              <Route path="/clientes" element={<Clients />} />
+
+              <Route
+                path="/contatos"
+                element={<Navigate to="/contatos/clientes" replace />}
+              />
+              <Route path="/contatos/clientes" element={<ContatosClientes />} />
+              <Route path="/contatos/vendas" element={<ContatosVendas />} />
+              <Route path="/contatos/validar" element={<ContatosValidar />} />
+
               <Route path="/agente-ia" element={<AIAgent />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

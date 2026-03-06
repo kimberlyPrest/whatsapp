@@ -82,6 +82,86 @@ export const clientsService = {
     }))
   },
 
+  async getMeusClientes(): Promise<ClientProfile[]> {
+    // Inner join ensures we only get profiles that have a related meus_clientes record
+    const { data: profiles, error: profilesErr } = await supabase
+      .from('client_profiles')
+      .select('*, meus_clientes!inner(*)')
+      .order('updated_at', { ascending: false })
+
+    if (profilesErr) throw profilesErr
+
+    const { data: convStatus, error: convErr } = await supabase
+      .from('conversation_status')
+      .select(
+        'phone_number, last_message_at, status, status_color, unread_count',
+      )
+
+    if (convErr) throw convErr
+
+    const convMap = new Map<string, any>()
+    for (const c of convStatus ?? []) {
+      const base = c.phone_number.split('@')[0]
+      if (!convMap.has(base)) convMap.set(base, c)
+    }
+
+    return (profiles ?? []).map((p: any) => {
+      const mc = Array.isArray(p.meus_clientes)
+        ? p.meus_clientes[0]
+        : p.meus_clientes
+      return {
+        ...p,
+        tipos: p.tipos ?? [],
+        tags: p.tags ?? [],
+        ...mc,
+        ...(convMap.get(p.phone_number) ?? {}),
+      }
+    })
+  },
+
+  async getParaValidar(): Promise<ClientProfile[]> {
+    const { data: profiles, error: profilesErr } = await supabase
+      .from('client_profiles')
+      .select('*, meus_clientes(id)')
+      .order('created_at', { ascending: false })
+
+    if (profilesErr) throw profilesErr
+
+    const { data: convStatus, error: convErr } = await supabase
+      .from('conversation_status')
+      .select(
+        'phone_number, last_message_at, status, status_color, unread_count',
+      )
+
+    if (convErr) throw convErr
+
+    const convMap = new Map<string, any>()
+    for (const c of convStatus ?? []) {
+      const base = c.phone_number.split('@')[0]
+      if (!convMap.has(base)) convMap.set(base, c)
+    }
+
+    // Filters out those present in meus_clientes or categorized as "Vendas"
+    const filtered = (profiles ?? []).filter((p: any) => {
+      const hasMeusClientes = Array.isArray(p.meus_clientes)
+        ? p.meus_clientes.length > 0
+        : !!p.meus_clientes
+      if (hasMeusClientes) return false
+      const isVendas = p.tipos && p.tipos.includes('Vendas')
+      if (isVendas) return false
+      return true
+    })
+
+    return filtered.map((p: any) => {
+      return {
+        ...p,
+        tipos: p.tipos ?? [],
+        tags: p.tags ?? [],
+        ...(convMap.get(p.phone_number) ?? {}),
+      }
+    })
+  },
+
   async getClientsToValidate(): Promise<ClientProfile[]> {
     const { data, error } = await supabase
       .from('client_profiles')
