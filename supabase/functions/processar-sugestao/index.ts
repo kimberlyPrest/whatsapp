@@ -20,35 +20,15 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 function normalizePhone(jid: string): string {
   return jid.split('@')[0]
 }
 
-// ─── Links de agendamento por produto ────────────────────────────────────────
-
-const BOOKING_LINKS: Record<string, string> = {
-  Elite: 'https://meetings.hubspot.com/kimberly-prestes/elite',
-  Scale: 'https://meetings.hubspot.com/kimberly-prestes/elite',
-  Skip: 'https://meetings.hubspot.com/kimberly-prestes/skip',
-  Skio: 'https://meetings.hubspot.com/kimberly-prestes/skip',
-}
-
-const SCHEDULING_RE =
-  /agendar|marcar.*(reuni|call|conversa)|quero.*falar|vamos.*conversar|quando.*pode|disponibilidade|horário.*livre|próxima.*call/i
-
-const RESCHEDULING_RE =
-  /remarcar|reagendar|mudar.*horário|outro.*horário|não.*posso.*nesse|não.*consigo.*nesse|adiar|cancelar.*reuni/i
-
 // Gera sugestão para uma conversa específica
-async function generateSuggestion(
-  supabase: ReturnType<typeof createClient>,
-  conv: Record<string, unknown>,
-  geminiKey: string,
-) {
+async function generateSuggestion(supabase: ReturnType<typeof createClient>, conv: Record<string, unknown>, geminiKey: string) {
   const phone = conv.phone_number as string
   const contactName = (conv.contact_name as string) ?? 'Cliente'
 
@@ -57,9 +37,7 @@ async function generateSuggestion(
   const { data: messages } = await supabase
     .from('messages')
     .select('*')
-    .or(
-      `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`,
-    )
+    .or(`phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`)
     .order('created_at', { ascending: false })
     .limit(20)
 
@@ -81,75 +59,6 @@ async function generateSuggestion(
 
   if (!recentText.trim()) return
 
-  // --- 0. Detecta intenção de reagendamento ou agendamento ---
-  const isRescheduling = RESCHEDULING_RE.test(recentText)
-  const isScheduling = !isRescheduling && SCHEDULING_RE.test(recentText)
-
-  const { data: clientProfile } = await supabase
-    .from('client_profiles')
-    .select('tipos')
-    .eq('phone_number', base)
-    .maybeSingle()
-
-  if (isRescheduling) {
-    const { data: nextEvent } = await supabase
-      .from('calendar_events')
-      .select('reschedule_link, title, start_at')
-      .eq('client_phone', base)
-      .gte('start_at', new Date().toISOString())
-      .not('reschedule_link', 'is', null)
-      .order('start_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-
-    if (nextEvent?.reschedule_link) {
-      const dateStr = new Date(nextEvent.start_at).toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'America/Sao_Paulo',
-      })
-      const suggText =
-        `Claro, sem problema! Você pode reagendar nossa reunião de ${dateStr} pelo link abaixo:\n\n` +
-        `${nextEvent.reschedule_link}\n\n` +
-        `Qualquer dúvida estou à disposição! 😊`
-
-      await supabase.from('suggestions').insert({
-        phone_number: phone,
-        suggestion_text: suggText,
-        auto_send: false,
-        context_messages: {
-          type: 'rescheduling',
-          event_title: nextEvent.title,
-        },
-      })
-      console.log(`🔄 Sugestão de reagendamento gerada para ${phone}`)
-      return
-    }
-  }
-
-  // Links de agendamento para incluir no contexto do Gemini
-  let bookingContext = ''
-  if (isScheduling) {
-    const tipos = (clientProfile?.tipos as string[] | null) ?? []
-    const tiposComLink = tipos.filter((t: string) => BOOKING_LINKS[t])
-    const linksUnicos = [
-      ...new Set(tiposComLink.map((t: string) => BOOKING_LINKS[t])),
-    ]
-
-    if (linksUnicos.length === 1) {
-      bookingContext = `\n\n## Link de agendamento:\n${linksUnicos[0]}\nInclua este link na resposta.`
-    } else if (linksUnicos.length > 1) {
-      bookingContext =
-        `\n\n## Links de agendamento (cliente tem mais de um produto):\n` +
-        tiposComLink
-          .map((t: string) => `- ${t}: ${BOOKING_LINKS[t]}`)
-          .join('\n') +
-        `\nInclua os dois links na resposta.`
-    }
-  }
-
   // --- 1. Verifica regras autônomas ---
   const { data: rules } = await supabase
     .from('autonomous_rules')
@@ -157,9 +66,7 @@ async function generateSuggestion(
     .eq('is_active', true)
 
   if (rules?.length) {
-    const sortedRules = [...rules].sort(
-      (a, b) => (a.priority ?? 999) - (b.priority ?? 999),
-    )
+    const sortedRules = [...rules].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999))
 
     for (const rule of sortedRules) {
       if (!rule.trigger_patterns?.length) continue
@@ -169,10 +76,7 @@ async function generateSuggestion(
           const regex = new RegExp(pattern, 'gi')
           if (regex.test(recentText.toLowerCase())) {
             let responseText: string = rule.response_template ?? ''
-            responseText = responseText.replace(
-              /\{\{contact_name\}\}/g,
-              contactName,
-            )
+            responseText = responseText.replace(/\{\{contact_name\}\}/g, contactName)
             responseText = responseText.replace(/\{\{phone_number\}\}/g, phone)
 
             // Salva sugestão baseada na regra
@@ -258,7 +162,7 @@ ${history}
 
 ### Mensagem(ns) atual(is) do cliente:
 ${recentText}
-${examples}${bookingContext}
+${examples}
 
 ## Instrução:
 Gere UMA resposta adequada para enviar ao cliente agora.
@@ -278,12 +182,10 @@ Retorne APENAS o texto da resposta, sem explicações ou formatação extra.`
     )
 
     const aiData = await res.json()
-    let aiText: string =
-      aiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
+    let aiText: string = aiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
 
     // Remove aspas desnecessárias que o Gemini às vezes adiciona
-    if (aiText.startsWith('"') && aiText.endsWith('"'))
-      aiText = aiText.slice(1, -1)
+    if (aiText.startsWith('"') && aiText.endsWith('"')) aiText = aiText.slice(1, -1)
 
     if (!aiText) {
       aiText = 'Olá! Recebi sua mensagem e retorno em breve. 😊'
@@ -296,17 +198,14 @@ Retorne APENAS o texto da resposta, sem explicações ou formatação extra.`
       context_messages: { is_ai: true, generated_at: new Date().toISOString() },
     })
 
-    console.log(
-      `✅ Sugestão IA gerada para ${phone}: "${aiText.substring(0, 60)}..."`,
-    )
+    console.log(`✅ Sugestão IA gerada para ${phone}: "${aiText.substring(0, 60)}..."`)
   } catch (e) {
     console.error(`Erro Gemini para ${phone}:`, e)
   }
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS')
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
     const supabase = createClient(
@@ -334,24 +233,20 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('last_sender', 'client')
       .eq('manually_closed', false)
-      .lte('last_message_at', threeMinAgo) // ≥ 3 minutos atrás (debounce)
-      .gte('last_message_at', tenMinAgo) // ≤ 10 minutos atrás (não muito antiga)
+      .lte('last_message_at', threeMinAgo)  // ≥ 3 minutos atrás (debounce)
+      .gte('last_message_at', tenMinAgo)    // ≤ 10 minutos atrás (não muito antiga)
 
     if (specificPhone) {
       convQuery = convQuery.eq('phone_number', normalizePhone(specificPhone))
     }
 
-    const { data: conversations, error: convQueryErr } =
-      await convQuery.limit(20)
+    const { data: conversations, error: convQueryErr } = await convQuery.limit(20)
 
     if (convQueryErr) throw convQueryErr
     if (!conversations?.length) {
-      return new Response(
-        JSON.stringify({ processed: 0, message: 'Nenhuma conversa pendente' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      )
+      return new Response(JSON.stringify({ processed: 0, message: 'Nenhuma conversa pendente' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     let processed = 0
