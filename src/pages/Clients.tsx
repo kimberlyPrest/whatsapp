@@ -81,7 +81,7 @@ export default function Clients() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#F0F2F5] overflow-y-auto">
+    <div className="flex flex-col min-h-full bg-[#F0F2F5]">
       <div className="max-w-7xl mx-auto w-full px-6 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -115,7 +115,7 @@ export default function Clients() {
         <ValidarSection clients={toValidate} onEdit={handleEdit} />
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg border border-[#E2E8F0] overflow-hidden">
+        <div className="bg-white rounded-lg border border-[#E2E8F0] overflow-hidden shadow-sm">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0]">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#667781]" />

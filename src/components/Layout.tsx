@@ -1,18 +1,40 @@
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
-import { Button } from '@/components/ui/button'
 import {
-  User,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar'
+import {
   MessageCircle,
   LayoutDashboard,
   BrainCircuit,
   Settings,
   Users,
+  LogOut,
+  User,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-const Layout = () => {
+const navItems = [
+  { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { name: 'Conversas', icon: MessageCircle, path: '/whatsapp' },
+  { name: 'Clientes', icon: Users, path: '/clientes' },
+  { name: 'Agente IA', icon: BrainCircuit, path: '/agente-ia' },
+  { name: 'Configurações', icon: Settings, path: '/settings' },
+]
+
+export default function Layout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = async () => {
     await signOut()
@@ -20,91 +42,100 @@ const Layout = () => {
   }
 
   return (
-    <main className="flex flex-col min-h-screen bg-[#F0F2F5]">
-      {/* Header com Navegação e User Info */}
-      <header className="bg-white border-b border-[#E2E8F0] px-6 py-3 flex justify-between items-center z-20 shadow-sm sticky top-0">
-        <div className="flex items-center gap-8">
+    <SidebarProvider>
+      <Sidebar className="border-r border-[#E2E8F0]">
+        <SidebarHeader className="border-b border-[#E2E8F0] px-4 py-4 h-[60px] flex items-center justify-center bg-white">
           <div
-            className="flex items-center gap-2 cursor-pointer group"
+            className="flex items-center gap-2 cursor-pointer w-full group"
             onClick={() => navigate('/dashboard')}
           >
-            <div className="bg-[#25D366] p-1.5 rounded-lg group-hover:bg-[#1fb355] transition-colors">
-              <MessageCircle className="w-6 h-6 text-white" />
+            <div className="bg-[#25D366] p-1.5 rounded-lg group-hover:bg-[#1fb355] transition-colors shrink-0">
+              <MessageCircle className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-[#111B21] hidden sm:inline-block">
-              WhatsApp Sugestão
+            <span className="text-lg font-bold text-[#111B21] truncate">
+              WhatsApp IA
             </span>
           </div>
+        </SidebarHeader>
 
-          <nav className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
-            >
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/whatsapp')}
-              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Conversas
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/clientes')}
-              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Clientes
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/agente-ia')}
-              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
-            >
-              <BrainCircuit className="w-4 h-4 mr-2" />
-              Agente IA
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/settings')}
-              className="text-sm font-medium text-[#667781] hover:text-[#25D366] hover:bg-[#25D366]/5"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configurações
-            </Button>
-          </nav>
-        </div>
+        <SidebarContent className="px-3 py-4 bg-white">
+          <SidebarMenu className="gap-2">
+            {navItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.path)
+              return (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    onClick={() => navigate(item.path)}
+                    tooltip={item.name}
+                    className={cn(
+                      'h-10 cursor-pointer rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 hover:text-[#25D366] font-medium'
+                        : 'text-[#667781] hover:bg-[#F0F2F5] hover:text-[#111B21]',
+                    )}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <item.icon
+                        className={cn(
+                          'w-5 h-5 shrink-0',
+                          isActive ? 'text-[#25D366]' : 'text-[#667781]',
+                        )}
+                      />
+                      <span className="truncate">{item.name}</span>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            })}
+          </SidebarMenu>
+        </SidebarContent>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 text-[#111B21] border-r border-[#E2E8F0] pr-4">
-            <div className="bg-gray-100 p-2 rounded-full">
-              <User className="w-4 h-4 text-gray-500" />
+        <SidebarFooter className="border-t border-[#E2E8F0] p-4 bg-white space-y-4">
+          <div className="flex items-center gap-3 px-2">
+            <div className="bg-[#F0F2F5] p-2 rounded-full shrink-0">
+              <User className="w-4 h-4 text-[#667781]" />
             </div>
-            <span className="text-sm font-medium">{user?.email}</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-[#111B21] truncate">
+                Sua Conta
+              </span>
+              <span className="text-xs text-[#667781] truncate">
+                {user?.email || 'carregando...'}
+              </span>
+            </div>
           </div>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleLogout}
+                className="text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer rounded-lg transition-colors h-10"
+              >
+                <LogOut className="w-5 h-5 shrink-0 mr-1" />
+                <span>Sair da plataforma</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="text-[#667781] hover:text-red-500 hover:bg-red-50 text-sm font-medium"
-          >
-            Sair
-          </Button>
-        </div>
-      </header>
-
-      {/* Page Content */}
-      <div className="flex-1 overflow-hidden h-[calc(100vh-64px)]">
-        <Outlet />
-      </div>
-    </main>
+      <SidebarInset className="flex flex-col h-screen w-full bg-[#F0F2F5] overflow-hidden">
+        <header className="flex h-[60px] md:hidden shrink-0 items-center gap-3 border-b border-[#E2E8F0] bg-white px-4 shadow-sm z-10">
+          <SidebarTrigger className="text-[#667781] hover:text-[#111B21] hover:bg-[#F0F2F5]" />
+          <div className="flex items-center gap-2">
+            <div className="bg-[#25D366] p-1 rounded-md shrink-0">
+              <MessageCircle className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-[#111B21] text-lg">
+              WhatsApp IA
+            </span>
+          </div>
+        </header>
+        <main className="flex-1 w-full h-full overflow-y-auto overflow-x-hidden">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
-
-export default Layout

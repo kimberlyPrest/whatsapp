@@ -246,7 +246,7 @@ export default function AIAgent() {
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 bg-[#F8FAFC] min-h-screen">
+    <div className="p-4 md:p-8 space-y-6 bg-[#F8FAFC] min-h-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold tracking-tight text-[#111B21]">

@@ -206,7 +206,7 @@ export default function WhatsApp() {
   )
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#F0F2F5] relative">
+    <div className="flex h-full w-full overflow-hidden bg-[#F0F2F5] relative">
       <div className="z-10 flex w-full h-full shadow-lg overflow-hidden bg-white">
         <Sidebar
           className={cn(
