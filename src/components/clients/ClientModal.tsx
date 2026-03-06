@@ -40,6 +40,7 @@ export function ClientModal({
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [secondaryEmail, setSecondaryEmail] = useState('')
   const [tldvLink, setTldvLink] = useState('')
   const [observations, setObservations] = useState('')
   const [selectedTipos, setSelectedTipos] = useState<string[]>([])
@@ -55,6 +56,7 @@ export function ClientModal({
     if (!client) return
     setName(client.contact_name ?? '')
     setEmail(client.email ?? '')
+    setSecondaryEmail(client.emails_alternativos?.[0] ?? '')
     setTldvLink(client.tldv_link ?? '')
     setObservations(client.observations ?? '')
     setSelectedTipos(client.tipos ?? [])
@@ -83,6 +85,9 @@ export function ClientModal({
       await clientsService.updateClient(client.phone_number, {
         contact_name: name.trim() || null,
         email: email.trim() || null,
+        emails_alternativos: secondaryEmail.trim()
+          ? [secondaryEmail.trim()]
+          : [],
         tldv_link: tldvLink.trim() || null,
         observations: observations.trim() || null,
         tipos: selectedTipos,
@@ -181,20 +186,6 @@ export function ClientModal({
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-[#667781]">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-[#667781]">
                   Etapa do Negócio
                 </label>
                 <select
@@ -214,14 +205,40 @@ export function ClientModal({
                   <option value="Churn">Churn</option>
                 </select>
               </div>
-              <div className="flex items-center gap-2 pt-6">
-                <Badge
-                  variant={propriedade ? 'default' : 'outline'}
-                  className={propriedade ? 'bg-[#25D366]' : ''}
-                >
-                  {propriedade ? 'Propriedade Ativa' : 'Sem Propriedade'}
-                </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#667781]">
+                  Email Principal
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@exemplo.com"
+                />
               </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#667781]">
+                  Email Secundário
+                </label>
+                <Input
+                  type="email"
+                  value={secondaryEmail}
+                  onChange={(e) => setSecondaryEmail(e.target.value)}
+                  placeholder="secundario@exemplo.com"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <Badge
+                variant={propriedade ? 'default' : 'outline'}
+                className={propriedade ? 'bg-[#25D366]' : ''}
+              >
+                {propriedade ? 'Propriedade Ativa' : 'Sem Propriedade'}
+              </Badge>
             </div>
 
             <div className="space-y-2">

@@ -14,6 +14,7 @@ export interface ClientProfile {
   phone_number: string
   contact_name: string | null
   email: string | null
+  emails_alternativos?: string[] | null
   tipos: string[]
   tags: string[]
   tldv_link: string | null
@@ -209,6 +210,7 @@ export const clientsService = {
         ClientProfile,
         | 'contact_name'
         | 'email'
+        | 'emails_alternativos'
         | 'tipos'
         | 'tags'
         | 'tldv_link'
@@ -221,6 +223,7 @@ export const clientsService = {
     const cpFields = [
       'contact_name',
       'email',
+      'emails_alternativos',
       'tipos',
       'tags',
       'tldv_link',
