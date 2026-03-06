@@ -1,6 +1,5 @@
 const CALENDAR_ID = 'kimberly@adapta.org'
-const WEBHOOK_URL =
-  'https://lasmxppjkfpypotnweyj.supabase.co/functions/v1/calendar-webhook'
+const WEBHOOK_URL = 'https://lasmxppjkfpypotnweyj.supabase.co/functions/v1/calendar-webhook'
 
 async function getAccessToken(): Promise<string> {
   const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -14,8 +13,7 @@ async function getAccessToken(): Promise<string> {
     }),
   })
   const data = await res.json()
-  if (!data.access_token)
-    throw new Error(`OAuth token error: ${JSON.stringify(data)}`)
+  if (!data.access_token) throw new Error(`OAuth token error: ${JSON.stringify(data)}`)
   return data.access_token
 }
 
@@ -77,9 +75,7 @@ Deno.serve(async (req) => {
     const syncUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/sync-calendar`
     fetch(syncUrl, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-      },
+      headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
     }).catch((e) => console.error('Erro ao chamar sync-calendar:', e))
   }
 
