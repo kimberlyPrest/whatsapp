@@ -2,8 +2,8 @@
   "_versions": {
     "enviar-mensagem": 14,
     "functions": 6,
-    "webhook-evolution": 10,
-    "processar-sugestao": 7,
+    "webhook-evolution": 11,
+    "processar-sugestao": 8,
     "receive-tldv-webhook": 5,
     "sync-calendar": 8,
     "calendar-webhook": 2

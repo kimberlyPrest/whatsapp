@@ -40,7 +40,7 @@ async function transcribeAudio(
     const base64Audio = btoa(binary)
 
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
     const { error: msgError } = await supabase.from('messages').upsert(
       {
         conversation_id: conversationId, // Nova ForeignKey
-        phone_number: phone,             // Mantido por retrocompatibilidade temporária
+        phone_number: phone, // Mantido por retrocompatibilidade temporária
         remote_jid: remoteJid,
         sender: 'client',
         message_text: messageText || null,
@@ -223,7 +223,11 @@ Deno.serve(async (req) => {
     console.log(`✅ Mensagem salva | phone: ${phone} | conv: ${conversationId}`)
 
     return new Response(
-      JSON.stringify({ success: true, phone_number: phone, conversation_id: conversationId }),
+      JSON.stringify({
+        success: true,
+        phone_number: phone,
+        conversation_id: conversationId,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {

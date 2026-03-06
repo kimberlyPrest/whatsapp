@@ -20,7 +20,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
 }
 
 function normalizePhone(jid: string): string {
@@ -28,7 +29,11 @@ function normalizePhone(jid: string): string {
 }
 
 // Gera sugestão para uma conversa específica
-async function generateSuggestion(supabase: ReturnType<typeof createClient>, conv: Record<string, unknown>, geminiKey: string) {
+async function generateSuggestion(
+  supabase: ReturnType<typeof createClient>,
+  conv: Record<string, unknown>,
+  geminiKey: string,
+) {
   const phone = conv.phone_number as string
   const contactName = (conv.contact_name as string) ?? 'Cliente'
 
@@ -37,7 +42,9 @@ async function generateSuggestion(supabase: ReturnType<typeof createClient>, con
   const { data: messages } = await supabase
     .from('messages')
     .select('*')
-    .or(`phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`)
+    .or(
+      `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`,
+    )
     .order('created_at', { ascending: false })
     .limit(20)
 
@@ -66,7 +73,9 @@ async function generateSuggestion(supabase: ReturnType<typeof createClient>, con
     .eq('is_active', true)
 
   if (rules?.length) {
-    const sortedRules = [...rules].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999))
+    const sortedRules = [...rules].sort(
+      (a, b) => (a.priority ?? 999) - (b.priority ?? 999),
+    )
 
     for (const rule of sortedRules) {
       if (!rule.trigger_patterns?.length) continue
@@ -76,7 +85,10 @@ async function generateSuggestion(supabase: ReturnType<typeof createClient>, con
           const regex = new RegExp(pattern, 'gi')
           if (regex.test(recentText.toLowerCase())) {
             let responseText: string = rule.response_template ?? ''
-            responseText = responseText.replace(/\{\{contact_name\}\}/g, contactName)
+            responseText = responseText.replace(
+              /\{\{contact_name\}\}/g,
+              contactName,
+            )
             responseText = responseText.replace(/\{\{phone_number\}\}/g, phone)
 
             // Salva sugestão baseada na regra
@@ -170,7 +182,7 @@ Retorne APENAS o texto da resposta, sem explicações ou formatação extra.`
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,10 +194,12 @@ Retorne APENAS o texto da resposta, sem explicações ou formatação extra.`
     )
 
     const aiData = await res.json()
-    let aiText: string = aiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
+    let aiText: string =
+      aiData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
 
     // Remove aspas desnecessárias que o Gemini às vezes adiciona
-    if (aiText.startsWith('"') && aiText.endsWith('"')) aiText = aiText.slice(1, -1)
+    if (aiText.startsWith('"') && aiText.endsWith('"'))
+      aiText = aiText.slice(1, -1)
 
     if (!aiText) {
       aiText = 'Olá! Recebi sua mensagem e retorno em breve. 😊'
@@ -198,14 +212,17 @@ Retorne APENAS o texto da resposta, sem explicações ou formatação extra.`
       context_messages: { is_ai: true, generated_at: new Date().toISOString() },
     })
 
-    console.log(`✅ Sugestão IA gerada para ${phone}: "${aiText.substring(0, 60)}..."`)
+    console.log(
+      `✅ Sugestão IA gerada para ${phone}: "${aiText.substring(0, 60)}..."`,
+    )
   } catch (e) {
     console.error(`Erro Gemini para ${phone}:`, e)
   }
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS')
+    return new Response('ok', { headers: corsHeaders })
 
   try {
     const supabase = createClient(
@@ -233,20 +250,24 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('last_sender', 'client')
       .eq('manually_closed', false)
-      .lte('last_message_at', threeMinAgo)  // ≥ 3 minutos atrás (debounce)
-      .gte('last_message_at', tenMinAgo)    // ≤ 10 minutos atrás (não muito antiga)
+      .lte('last_message_at', threeMinAgo) // ≥ 3 minutos atrás (debounce)
+      .gte('last_message_at', tenMinAgo) // ≤ 10 minutos atrás (não muito antiga)
 
     if (specificPhone) {
       convQuery = convQuery.eq('phone_number', normalizePhone(specificPhone))
     }
 
-    const { data: conversations, error: convQueryErr } = await convQuery.limit(20)
+    const { data: conversations, error: convQueryErr } =
+      await convQuery.limit(20)
 
     if (convQueryErr) throw convQueryErr
     if (!conversations?.length) {
-      return new Response(JSON.stringify({ processed: 0, message: 'Nenhuma conversa pendente' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ processed: 0, message: 'Nenhuma conversa pendente' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
     }
 
     let processed = 0
