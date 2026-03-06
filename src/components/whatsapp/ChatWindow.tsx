@@ -22,10 +22,12 @@ import { MessageBubble } from './MessageBubble'
 import { AISuggestion } from './AISuggestion'
 import {
   Message,
+  Conversation,
   whatsappService,
   normalizePhone,
 } from '@/lib/services/whatsapp'
 import { supabase } from '@/lib/supabase/client'
+import { Tables } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
@@ -71,7 +73,7 @@ function groupMessagesByDate(messages: Message[]) {
 }
 
 interface ChatWindowProps {
-  conversation?: any
+  conversation?: Conversation
   messages: Message[]
   hasMore: boolean
   loadingMore: boolean
@@ -96,7 +98,9 @@ export function ChatWindow({
   onLoadMore,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('')
-  const [suggestion, setSuggestion] = useState<any>(null)
+  const [suggestion, setSuggestion] = useState<Tables<'suggestions'> | null>(
+    null,
+  )
   const [showSuggestion, setShowSuggestion] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -162,7 +166,7 @@ export function ChatWindow({
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'suggestions' },
         (payload) => {
-          const sugg = payload.new
+          const sugg = payload.new as Tables<'suggestions'>
           const suggBase = normalizePhone((sugg.phone_number as string) ?? '')
           if (suggBase === base && !sugg.approved_at) {
             setSuggestion(sugg)

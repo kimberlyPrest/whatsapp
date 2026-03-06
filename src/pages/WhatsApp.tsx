@@ -5,6 +5,7 @@ import { ChatWindow } from '@/components/whatsapp/ChatWindow'
 import {
   whatsappService,
   Message,
+  Conversation,
   normalizePhone,
 } from '@/lib/services/whatsapp'
 import { supabase } from '@/lib/supabase/client'
@@ -14,7 +15,7 @@ import { useToast } from '@/hooks/use-toast'
 
 export default function WhatsApp() {
   const location = useLocation()
-  const [conversations, setConversations] = useState<any[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedId, setSelectedId] = useState<string | undefined>(
     location.state?.selectedId,

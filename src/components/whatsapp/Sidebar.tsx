@@ -9,10 +9,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ConversationItem } from './ConversationItem'
+import { Conversation } from '@/lib/services/whatsapp'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
-  conversations: any[]
+  conversations: Conversation[]
   selectedId?: string
   onSelect: (id: string) => void
   statusFilter: string

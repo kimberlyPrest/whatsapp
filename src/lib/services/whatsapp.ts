@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
+import { TablesInsert, TablesUpdate } from '@/lib/supabase/types'
 
 // Normaliza número de telefone removendo o sufixo JID do WhatsApp (@s.whatsapp.net, @c.us, etc)
 export function normalizePhone(phone: string): string {
@@ -24,14 +25,14 @@ export interface Conversation {
   last_message_text: string | null
   last_message_at: string | null
   last_sender: string | null
-  manually_closed: boolean
+  manually_closed?: boolean | null
   unread_count: number
-  status?: string
-  status_color?: string
+  status?: string | null
+  status_color?: string | null
 }
 
 export const whatsappService = {
-  async getConversations() {
+  async getConversations(): Promise<Conversation[]> {
     const { data, error } = await supabase
       .from('conversation_status')
       .select('*')
@@ -41,7 +42,8 @@ export const whatsappService = {
 
     // Deduplica por número base (remove sufixo JID), mantendo a entrada mais recente
     const seen = new Set<string>()
-    return (data || []).filter((conv) => {
+    return (data as unknown as Conversation[]).filter((conv) => {
+      if (!conv.phone_number) return false
       const key = normalizePhone(conv.phone_number)
       if (seen.has(key)) return false
       seen.add(key)
@@ -237,7 +239,7 @@ export const whatsappService = {
     return data
   },
 
-  async createAutonomousRule(rule: any) {
+  async createAutonomousRule(rule: TablesInsert<'autonomous_rules'>) {
     const { data, error } = await supabase
       .from('autonomous_rules')
       .insert(rule)
@@ -247,7 +249,10 @@ export const whatsappService = {
     return data
   },
 
-  async updateAutonomousRule(id: string, rule: any) {
+  async updateAutonomousRule(
+    id: string,
+    rule: TablesUpdate<'autonomous_rules'>,
+  ) {
     const { data, error } = await supabase
       .from('autonomous_rules')
       .update(rule)
