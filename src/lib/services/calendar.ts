@@ -78,42 +78,44 @@ export const calendarService = {
   },
 
   async getMeetingAnalytics(start: Date, end: Date) {
-    const [
-      { count: total },
-      { count: showedUp },
-      { count: tracked },
-      { data: allEvents },
-    ] = await Promise.all([
-      db
-        .from('calendar_events')
-        .select('*', { count: 'exact', head: true })
-        .gte('start_at', start.toISOString())
-        .lte('start_at', end.toISOString())
-        .eq('status', 'confirmed'),
-      db
-        .from('calendar_events')
-        .select('*', { count: 'exact', head: true })
-        .gte('start_at', start.toISOString())
-        .lte('start_at', end.toISOString())
-        .eq('status', 'confirmed')
-        .eq('show_up', true),
-      db
-        .from('calendar_events')
-        .select('*', { count: 'exact', head: true })
-        .gte('start_at', start.toISOString())
-        .lte('start_at', end.toISOString())
-        .eq('status', 'confirmed')
-        .not('show_up', 'is', null),
-      // Distribuição por horário: usa últimos 60 dias para ter dados suficientes
-      db
-        .from('calendar_events')
-        .select('start_at')
-        .gte(
-          'start_at',
-          new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-        )
-        .eq('status', 'confirmed'),
-    ])
+    const [totalRes, showedUpRes, trackedRes, allEventsRes] = await Promise.all(
+      [
+        db
+          .from('calendar_events')
+          .select('*')
+          .gte('start_at', start.toISOString())
+          .lte('start_at', end.toISOString())
+          .eq('status', 'confirmed'),
+        db
+          .from('calendar_events')
+          .select('*')
+          .gte('start_at', start.toISOString())
+          .lte('start_at', end.toISOString())
+          .eq('status', 'confirmed')
+          .eq('show_up', true),
+        db
+          .from('calendar_events')
+          .select('*')
+          .gte('start_at', start.toISOString())
+          .lte('start_at', end.toISOString())
+          .eq('status', 'confirmed')
+          .not('show_up', 'is', null),
+        // Distribuição por horário: usa últimos 60 dias para ter dados suficientes
+        db
+          .from('calendar_events')
+          .select('start_at')
+          .gte(
+            'start_at',
+            new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+          )
+          .eq('status', 'confirmed'),
+      ],
+    )
+
+    const total = totalRes.data ? totalRes.data.length : 0
+    const showedUp = showedUpRes.data ? showedUpRes.data.length : 0
+    const tracked = trackedRes.data ? trackedRes.data.length : 0
+    const allEvents = allEventsRes.data
 
     const hourCounts: Record<number, number> = {}
     for (const ev of allEvents || []) {
@@ -130,13 +132,10 @@ export const calendarService = {
     )
 
     return {
-      total: total ?? 0,
-      showedUp: showedUp ?? 0,
-      tracked: tracked ?? 0,
-      showUpRate:
-        (tracked ?? 0) > 0
-          ? Math.round(((showedUp ?? 0) / tracked!) * 100)
-          : null,
+      total: total,
+      showedUp: showedUp,
+      tracked: tracked,
+      showUpRate: tracked > 0 ? Math.round((showedUp / tracked) * 100) : null,
       peakHour: peakEntry.count > 0 ? peakEntry.hour : '—',
       hoursDistribution,
     }
