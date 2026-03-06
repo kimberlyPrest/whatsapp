@@ -16,7 +16,8 @@ async function getAccessToken(): Promise<string> {
     }),
   })
   const data = await res.json()
-  if (!data.access_token) throw new Error(`OAuth token error: ${JSON.stringify(data)}`)
+  if (!data.access_token)
+    throw new Error(`OAuth token error: ${JSON.stringify(data)}`)
   return data.access_token
 }
 
@@ -35,7 +36,9 @@ function extractRescheduleLink(description: string | null): string | null {
   )
   if (rescheduleMatch) return rescheduleMatch[0]
   // Fallback: qualquer link HubSpot meetings na descrição
-  const anyMatch = description.match(/https:\/\/meetings\.hubspot\.com\/[^\s"<>]+/)
+  const anyMatch = description.match(
+    /https:\/\/meetings\.hubspot\.com\/[^\s"<>]+/,
+  )
   return anyMatch ? anyMatch[0] : null
 }
 
@@ -158,10 +161,13 @@ Deno.serve(async () => {
       .select('client_phone, start_at, meet_link')
       .not('client_phone', 'is', null)
       .gte('start_at', now)
-      .eq('status', 'confirmed')
+      .neq('status', 'cancelled')
       .order('start_at', { ascending: true })
 
-    const nextByClient: Record<string, { start_at: string; meet_link: string | null }> = {}
+    const nextByClient: Record<
+      string,
+      { start_at: string; meet_link: string | null }
+    > = {}
     for (const ev of futureEvents || []) {
       if (!nextByClient[ev.client_phone]) {
         nextByClient[ev.client_phone] = {
@@ -174,7 +180,10 @@ Deno.serve(async () => {
     for (const [phone, next] of Object.entries(nextByClient)) {
       await supabase
         .from('client_profiles')
-        .update({ next_meeting_at: next.start_at, next_meeting_link: next.meet_link })
+        .update({
+          next_meeting_at: next.start_at,
+          next_meeting_link: next.meet_link,
+        })
         .eq('phone_number', phone)
     }
 

@@ -34,7 +34,7 @@ export const calendarService = {
       .select('*')
       .gte('start_at', start.toISOString())
       .lte('start_at', end.toISOString())
-      .eq('status', 'confirmed')
+      .neq('status', 'cancelled')
       .order('start_at', { ascending: true })
 
     if (error) throw error
@@ -51,7 +51,7 @@ export const calendarService = {
       .select('*')
       .gte('start_at', now.toISOString())
       .lte('start_at', end.toISOString())
-      .eq('status', 'confirmed')
+      .neq('status', 'cancelled')
       .order('start_at', { ascending: true })
 
     if (error) throw error
@@ -85,20 +85,20 @@ export const calendarService = {
           .select('*')
           .gte('start_at', start.toISOString())
           .lte('start_at', end.toISOString())
-          .eq('status', 'confirmed'),
+          .neq('status', 'cancelled'),
         db
           .from('calendar_events')
           .select('*')
           .gte('start_at', start.toISOString())
           .lte('start_at', end.toISOString())
-          .eq('status', 'confirmed')
+          .neq('status', 'cancelled')
           .eq('show_up', true),
         db
           .from('calendar_events')
           .select('*')
           .gte('start_at', start.toISOString())
           .lte('start_at', end.toISOString())
-          .eq('status', 'confirmed')
+          .neq('status', 'cancelled')
           .not('show_up', 'is', null),
         // Distribuição por horário: usa últimos 60 dias para ter dados suficientes
         db
@@ -108,7 +108,7 @@ export const calendarService = {
             'start_at',
             new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
           )
-          .eq('status', 'confirmed'),
+          .neq('status', 'cancelled'),
       ],
     )
 
