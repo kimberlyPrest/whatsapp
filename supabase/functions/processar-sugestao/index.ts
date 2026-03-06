@@ -119,7 +119,10 @@ async function generateSuggestion(
         phone_number: phone,
         suggestion_text: suggText,
         auto_send: false,
-        context_messages: { type: 'rescheduling', event_title: nextEvent.title },
+        context_messages: {
+          type: 'rescheduling',
+          event_title: nextEvent.title,
+        },
       })
       console.log(`🔄 Sugestão de reagendamento gerada para ${phone}`)
       return
@@ -131,14 +134,18 @@ async function generateSuggestion(
   if (isScheduling) {
     const tipos = (clientProfile?.tipos as string[] | null) ?? []
     const tiposComLink = tipos.filter((t: string) => BOOKING_LINKS[t])
-    const linksUnicos = [...new Set(tiposComLink.map((t: string) => BOOKING_LINKS[t]))]
+    const linksUnicos = [
+      ...new Set(tiposComLink.map((t: string) => BOOKING_LINKS[t])),
+    ]
 
     if (linksUnicos.length === 1) {
       bookingContext = `\n\n## Link de agendamento:\n${linksUnicos[0]}\nInclua este link na resposta.`
     } else if (linksUnicos.length > 1) {
       bookingContext =
         `\n\n## Links de agendamento (cliente tem mais de um produto):\n` +
-        tiposComLink.map((t: string) => `- ${t}: ${BOOKING_LINKS[t]}`).join('\n') +
+        tiposComLink
+          .map((t: string) => `- ${t}: ${BOOKING_LINKS[t]}`)
+          .join('\n') +
         `\nInclua os dois links na resposta.`
     }
   }

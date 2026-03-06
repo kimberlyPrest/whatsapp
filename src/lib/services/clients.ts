@@ -118,7 +118,7 @@ export const clientsService = {
       ...data,
       tipos: data.tipos ?? [],
       tags: data.tags ?? [],
-      ...mc
+      ...mc,
     }
   },
 
@@ -138,9 +138,18 @@ export const clientsService = {
     >,
   ): Promise<ClientProfile> {
     // 1. Atualiza client_profiles
-    const cpFields = ['contact_name', 'email', 'tipos', 'tags', 'tldv_link', 'observations']
+    const cpFields = [
+      'contact_name',
+      'email',
+      'tipos',
+      'tags',
+      'tldv_link',
+      'observations',
+    ]
     const cpUpdates: any = { updated_at: new Date().toISOString() }
-    Object.keys(updates).forEach(k => { if (cpFields.includes(k)) cpUpdates[k] = (updates as any)[k] })
+    Object.keys(updates).forEach((k) => {
+      if (cpFields.includes(k)) cpUpdates[k] = (updates as any)[k]
+    })
 
     const { data, error } = await supabase
       .from('client_profiles')
@@ -153,13 +162,14 @@ export const clientsService = {
 
     // 2. Atualiza meus_clientes (etapa_negocio) se necessário
     if (updates.etapa_negocio !== undefined) {
-      await supabase
-        .from('meus_clientes')
-        .upsert({
+      await supabase.from('meus_clientes').upsert(
+        {
           client_id: data.id,
           etapa_negocio: updates.etapa_negocio,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'client_id' })
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'client_id' },
+      )
     }
 
     return { ...data, tipos: data.tipos ?? [], tags: data.tags ?? [] }

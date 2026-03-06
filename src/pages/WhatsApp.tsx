@@ -106,7 +106,9 @@ export default function WhatsApp() {
 
     const loadMessages = async () => {
       try {
-        const data = await whatsappService.getMessages(selectedId, { limit: 20 })
+        const data = await whatsappService.getMessages(selectedId, {
+          limit: 20,
+        })
         setMessages(data)
         setHasMore(data.length === 20)
         setScrollTrigger(Date.now())

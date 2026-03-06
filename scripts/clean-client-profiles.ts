@@ -17,7 +17,8 @@
 
 const DRY_RUN = !process.argv.includes('--execute')
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://lasmxppjkfpypotnweyj.supabase.co'
+const SUPABASE_URL =
+  process.env.VITE_SUPABASE_URL || 'https://lasmxppjkfpypotnweyj.supabase.co'
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 const HEADERS = {
@@ -39,9 +40,17 @@ function normalizePhone(raw: string): string | null {
   if (digits.length === 13 && digits.startsWith('55')) return digits
   if (digits.length === 12 && digits.startsWith('55'))
     return `55${digits.slice(2, 4)}9${digits.slice(4)}`
-  if (digits.length === 11 && !digits.startsWith('0') && !digits.startsWith('55'))
+  if (
+    digits.length === 11 &&
+    !digits.startsWith('0') &&
+    !digits.startsWith('55')
+  )
     return `55${digits}`
-  if (digits.length === 10 && !digits.startsWith('0') && !digits.startsWith('55'))
+  if (
+    digits.length === 10 &&
+    !digits.startsWith('0') &&
+    !digits.startsWith('55')
+  )
     return `55${digits.slice(0, 2)}9${digits.slice(2)}`
   if (digits.length >= 7 && digits.length <= 15) return digits
   return null
@@ -54,9 +63,12 @@ async function fetchAll<T>(path: string): Promise<T[]> {
   let offset = 0
   while (true) {
     const sep = path.includes('?') ? '&' : '?'
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}${sep}limit=1000&offset=${offset}`, {
-      headers: HEADERS,
-    })
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${path}${sep}limit=1000&offset=${offset}`,
+      {
+        headers: HEADERS,
+      },
+    )
     if (!res.ok) throw new Error(`Erro GET ${path}: ${await res.text()}`)
     const data: T[] = await res.json()
     results.push(...data)
@@ -86,9 +98,16 @@ async function apiDelete(path: string) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  if (!SUPABASE_KEY) { console.error('❌ SUPABASE_SERVICE_ROLE_KEY não definido'); process.exit(1) }
+  if (!SUPABASE_KEY) {
+    console.error('❌ SUPABASE_SERVICE_ROLE_KEY não definido')
+    process.exit(1)
+  }
 
-  console.log(DRY_RUN ? '\n🔍 DRY-RUN (nenhuma alteração será feita)\n' : '\n🚀 MODO EXECUÇÃO\n')
+  console.log(
+    DRY_RUN
+      ? '\n🔍 DRY-RUN (nenhuma alteração será feita)\n'
+      : '\n🚀 MODO EXECUÇÃO\n',
+  )
 
   // ── 1. Busca todos os client_profiles ──────────────────────────────────────
 
@@ -117,7 +136,12 @@ async function main() {
 
   // Pontuação para decidir qual registro manter quando há duplicata
   function score(p: Profile): number {
-    return (p.contact_name ? 2 : 0) + (p.email ? 2 : 0) + (p.tipos?.length ?? 0) + (p.tags?.length ?? 0)
+    return (
+      (p.contact_name ? 2 : 0) +
+      (p.email ? 2 : 0) +
+      (p.tipos?.length ?? 0) +
+      (p.tags?.length ?? 0)
+    )
   }
 
   for (const p of profiles) {
@@ -163,29 +187,35 @@ async function main() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log(`✏️  Limpar JID (phone_number):      ${toFix.length}`)
   console.log(`🗑️  Deletar duplicatas:             ${toDrop.length}`)
-  console.log(`✅  Manter sem alteração:           ${profiles.length - toFix.length - toDrop.length}`)
+  console.log(
+    `✅  Manter sem alteração:           ${profiles.length - toFix.length - toDrop.length}`,
+  )
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log(`   Total final esperado: ${profiles.length - toDrop.length}`)
 
   if (toFix.length) {
     console.log('\n✏️  JIDs a limpar (primeiros 20):')
-    toFix.slice(0, 20).forEach((f) =>
-      console.log(`   ${f.oldPhone.padEnd(45)}→ ${f.newPhone}`),
-    )
+    toFix
+      .slice(0, 20)
+      .forEach((f) => console.log(`   ${f.oldPhone.padEnd(45)}→ ${f.newPhone}`))
     if (toFix.length > 20) console.log(`   ... e mais ${toFix.length - 20}`)
   }
 
   if (toDrop.length) {
     console.log('\n🗑️  Duplicatas a deletar:')
     toDrop.forEach((p) =>
-      console.log(`   ${p.phone_number.padEnd(35)} (${p.contact_name ?? 'sem nome'})`),
+      console.log(
+        `   ${p.phone_number.padEnd(35)} (${p.contact_name ?? 'sem nome'})`,
+      ),
     )
   }
 
   if (DRY_RUN) {
     console.log('\n⚠️  Nenhuma alteração feita. Para executar:\n')
     console.log('   npx tsx scripts/clean-client-profiles.ts --execute\n')
-    console.log('💡 Depois rode o import-clients.ts para sincronizar a planilha com meus_clientes.\n')
+    console.log(
+      '💡 Depois rode o import-clients.ts para sincronizar a planilha com meus_clientes.\n',
+    )
     return
   }
 
@@ -207,7 +237,9 @@ async function main() {
       const inClause = `(${chunk.map((p) => `"${p.id}"`).join(',')})`
       await apiDelete(`meus_clientes?client_id=in.${inClause}`)
       await apiDelete(`client_profiles?id=in.${inClause}`)
-      process.stdout.write(`   Lote ${Math.floor(i / BATCH) + 1}/${Math.ceil(toDrop.length / BATCH)} ✓\r`)
+      process.stdout.write(
+        `   Lote ${Math.floor(i / BATCH) + 1}/${Math.ceil(toDrop.length / BATCH)} ✓\r`,
+      )
     }
     console.log('\n   ✅ Duplicatas removidas')
   }

@@ -12,7 +12,11 @@ export interface CalendarEvent {
   start_at: string
   end_at: string | null
   meet_link: string | null
-  attendees: { email: string; name?: string | null; responseStatus?: string | null }[]
+  attendees: {
+    email: string
+    name?: string | null
+    responseStatus?: string | null
+  }[]
   client_phone: string | null
   client_email: string | null
   status: string
@@ -54,7 +58,10 @@ export const calendarService = {
     return data || []
   },
 
-  async getMeetingsByMonth(year: number, month: number): Promise<CalendarEvent[]> {
+  async getMeetingsByMonth(
+    year: number,
+    month: number,
+  ): Promise<CalendarEvent[]> {
     const start = new Date(year, month - 1, 1)
     const end = new Date(year, month, 0, 23, 59, 59)
 
@@ -101,7 +108,10 @@ export const calendarService = {
       db
         .from('calendar_events')
         .select('start_at')
-        .gte('start_at', new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString())
+        .gte(
+          'start_at',
+          new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+        )
         .eq('status', 'confirmed'),
     ])
 
@@ -123,7 +133,10 @@ export const calendarService = {
       total: total ?? 0,
       showedUp: showedUp ?? 0,
       tracked: tracked ?? 0,
-      showUpRate: (tracked ?? 0) > 0 ? Math.round(((showedUp ?? 0) / tracked!) * 100) : null,
+      showUpRate:
+        (tracked ?? 0) > 0
+          ? Math.round(((showedUp ?? 0) / tracked!) * 100)
+          : null,
       peakHour: peakEntry.count > 0 ? peakEntry.hour : '—',
       hoursDistribution,
     }

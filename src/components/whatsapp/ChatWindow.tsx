@@ -20,7 +20,11 @@ import {
 } from '@/components/ui/tooltip'
 import { MessageBubble } from './MessageBubble'
 import { AISuggestion } from './AISuggestion'
-import { Message, whatsappService, normalizePhone } from '@/lib/services/whatsapp'
+import {
+  Message,
+  whatsappService,
+  normalizePhone,
+} from '@/lib/services/whatsapp'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'

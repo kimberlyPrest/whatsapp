@@ -31,7 +31,9 @@ export function ConversationItem({
       )}
     >
       <Avatar className="h-12 w-12">
-        <AvatarFallback>{contactName.substring(0, 2).toUpperCase()}</AvatarFallback>
+        <AvatarFallback>
+          {contactName.substring(0, 2).toUpperCase()}
+        </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">

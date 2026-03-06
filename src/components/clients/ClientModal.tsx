@@ -204,15 +204,22 @@ export function ClientModal({
                 >
                   <option value="">Selecione a etapa...</option>
                   <option value="Lead Qualificado">Lead Qualificado</option>
-                  <option value="1ª Reunião Agendada">1ª Reunião Agendada</option>
-                  <option value="Aguardando Contrato">Aguardando Contrato</option>
+                  <option value="1ª Reunião Agendada">
+                    1ª Reunião Agendada
+                  </option>
+                  <option value="Aguardando Contrato">
+                    Aguardando Contrato
+                  </option>
                   <option value="Cliente Ativo">Cliente Ativo</option>
                   <option value="Churn">Churn</option>
                 </select>
               </div>
               <div className="flex items-center gap-2 pt-6">
-                <Badge variant={propriedade ? "default" : "outline"} className={propriedade ? "bg-[#25D366]" : ""}>
-                  {propriedade ? "Propriedade Ativa" : "Sem Propriedade"}
+                <Badge
+                  variant={propriedade ? 'default' : 'outline'}
+                  className={propriedade ? 'bg-[#25D366]' : ''}
+                >
+                  {propriedade ? 'Propriedade Ativa' : 'Sem Propriedade'}
                 </Badge>
               </div>
             </div>
@@ -224,10 +231,11 @@ export function ClientModal({
                   <button
                     key={tipo}
                     onClick={() => toggleTipo(tipo)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${selectedTipos.includes(tipo)
-                      ? tipoColors[tipo]
-                      : 'bg-white text-[#667781] border-[#E2E8F0] hover:border-[#25D366]'
-                      }`}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                      selectedTipos.includes(tipo)
+                        ? tipoColors[tipo]
+                        : 'bg-white text-[#667781] border-[#E2E8F0] hover:border-[#25D366]'
+                    }`}
                   >
                     {tipo}
                   </button>
@@ -323,7 +331,11 @@ export function ClientModal({
                       <div className="font-medium flex items-center justify-between">
                         {client.call_1_date}
                         {client.call_1_link && (
-                          <a href={client.call_1_link} target="_blank" rel="noreferrer">
+                          <a
+                            href={client.call_1_link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             <ExternalLink className="w-3 h-3 text-[#25D366]" />
                           </a>
                         )}
@@ -336,7 +348,11 @@ export function ClientModal({
                       <div className="font-medium flex items-center justify-between">
                         {client.call_2_date}
                         {client.call_2_link && (
-                          <a href={client.call_2_link} target="_blank" rel="noreferrer">
+                          <a
+                            href={client.call_2_link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             <ExternalLink className="w-3 h-3 text-[#25D366]" />
                           </a>
                         )}
@@ -348,7 +364,9 @@ export function ClientModal({
                   <div className="pt-2 mt-2 border-t border-gray-200">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-[#667781]">CSAT 1</span>
-                      <span className="text-xs font-bold text-yellow-600">★ {client.csat_1}/5</span>
+                      <span className="text-xs font-bold text-yellow-600">
+                        ★ {client.csat_1}/5
+                      </span>
                     </div>
                     {client.csat_comment_1 && (
                       <p className="text-[10px] text-[#667781] italic mt-1 bg-white p-1.5 rounded">

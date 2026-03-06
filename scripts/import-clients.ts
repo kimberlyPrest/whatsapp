@@ -20,16 +20,17 @@
 
 // ─── Config ────────────────────────────────────────────────────────────────
 
-const SHEET_ID      = '1ZX67cFUdolKqWwmgXPnJ6QsYhQXHyELn8aylp0rIXGw'
+const SHEET_ID = '1ZX67cFUdolKqWwmgXPnJ6QsYhQXHyELn8aylp0rIXGw'
 const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://lasmxppjkfpypotnweyj.supabase.co'
+const SUPABASE_URL =
+  process.env.VITE_SUPABASE_URL || 'https://lasmxppjkfpypotnweyj.supabase.co'
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 const HEADERS = {
   'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
 }
 
 // ─── Normalização de telefone ──────────────────────────────────────────────
@@ -77,10 +78,13 @@ function parseCSVLine(line: string): string[] {
   for (let i = 0; i < line.length; i++) {
     const char = line[i]
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
-      else inQuotes = !inQuotes
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"'
+        i++
+      } else inQuotes = !inQuotes
     } else if (char === ',' && !inQuotes) {
-      result.push(current.trim()); current = ''
+      result.push(current.trim())
+      current = ''
     } else {
       current += char
     }
@@ -108,7 +112,10 @@ async function upsertBatch(table: string, rows: object[], onConflict: string) {
     `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${onConflict}`,
     {
       method: 'POST',
-      headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      headers: {
+        ...HEADERS,
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
       body: JSON.stringify(rows),
     },
   )
@@ -129,7 +136,8 @@ async function main() {
   // ── 1. Baixa a planilha ────────────────────────────────────────────────────
   console.log('⬇  Baixando planilha...')
   const sheetRes = await fetch(SHEET_CSV_URL)
-  if (!sheetRes.ok) throw new Error(`Erro ao buscar planilha: ${sheetRes.status}`)
+  if (!sheetRes.ok)
+    throw new Error(`Erro ao buscar planilha: ${sheetRes.status}`)
 
   const csv = await sheetRes.text()
   const lines = csv.split('\n').filter((l) => l.trim())
@@ -138,21 +146,49 @@ async function main() {
 
   // Detecta colunas dinamicamente
   const idx = {
-    nome:     headers.findIndex((h) => h.includes('nome')),
-    tipo:     headers.findIndex((h) => h === 'tipo' || h.includes('tipo')),
-    tel:      headers.findIndex((h) => h.includes('telefone') || h.includes('phone')),
-    email:    headers.findIndex((h) => h.includes('email')),
-    etapa:    headers.findIndex((h) => h.includes('etapa')),
-    call1:    headers.findIndex((h) => h.includes('1') && h.includes('call') || h.includes('1ª call') || h.includes('data 1')),
-    call2:    headers.findIndex((h) => h.includes('2') && h.includes('call') || h.includes('2ª call') || h.includes('data 2')),
-    csat1:    headers.findIndex((h) => h.includes('avalia') || h.includes('satisfaç') || h.includes('nota') || (h.includes('csat') && !h.includes('coment'))),
-    csatCom1: headers.findIndex((h) => h.includes('comentário') && (h.includes('primeir') || h.includes('1'))),
-    csatCom2: headers.findIndex((h) => h.includes('comentário') && (h.includes('segund') || h.includes('2'))),
+    nome: headers.findIndex((h) => h.includes('nome')),
+    tipo: headers.findIndex((h) => h === 'tipo' || h.includes('tipo')),
+    tel: headers.findIndex(
+      (h) => h.includes('telefone') || h.includes('phone'),
+    ),
+    email: headers.findIndex((h) => h.includes('email')),
+    etapa: headers.findIndex((h) => h.includes('etapa')),
+    call1: headers.findIndex(
+      (h) =>
+        (h.includes('1') && h.includes('call')) ||
+        h.includes('1ª call') ||
+        h.includes('data 1'),
+    ),
+    call2: headers.findIndex(
+      (h) =>
+        (h.includes('2') && h.includes('call')) ||
+        h.includes('2ª call') ||
+        h.includes('data 2'),
+    ),
+    csat1: headers.findIndex(
+      (h) =>
+        h.includes('avalia') ||
+        h.includes('satisfaç') ||
+        h.includes('nota') ||
+        (h.includes('csat') && !h.includes('coment')),
+    ),
+    csatCom1: headers.findIndex(
+      (h) =>
+        h.includes('comentário') && (h.includes('primeir') || h.includes('1')),
+    ),
+    csatCom2: headers.findIndex(
+      (h) =>
+        h.includes('comentário') && (h.includes('segund') || h.includes('2')),
+    ),
   }
 
   console.log(`   ${dataLines.length} linhas na planilha`)
-  console.log(`   Índices: nome[${idx.nome}] tipo[${idx.tipo}] tel[${idx.tel}] email[${idx.email}] etapa[${idx.etapa}]`)
-  console.log(`   call1[${idx.call1}] call2[${idx.call2}] csat1[${idx.csat1}] csatCom1[${idx.csatCom1}] csatCom2[${idx.csatCom2}]`)
+  console.log(
+    `   Índices: nome[${idx.nome}] tipo[${idx.tipo}] tel[${idx.tel}] email[${idx.email}] etapa[${idx.etapa}]`,
+  )
+  console.log(
+    `   call1[${idx.call1}] call2[${idx.call2}] csat1[${idx.csat1}] csatCom1[${idx.csatCom1}] csatCom2[${idx.csatCom2}]`,
+  )
 
   // ── 2. Processa linhas ────────────────────────────────────────────────────
   type SheetRow = {
@@ -169,18 +205,21 @@ async function main() {
     const cols = parseCSVLine(line)
     const rawPhone = cols[idx.tel] ?? ''
     const phone = normalizePhone(rawPhone)
-    if (!phone) { skipped++; continue }
+    if (!phone) {
+      skipped++
+      continue
+    }
 
-    const nome    = cols[idx.nome]?.trim() || null
-    const tipo    = cols[idx.tipo]?.trim() || null
-    const email   = idx.email >= 0 ? (cols[idx.email]?.trim() || null) : null
-    const etapa   = idx.etapa >= 0 ? (cols[idx.etapa]?.trim() || null) : null
-    const call1   = idx.call1 >= 0 ? parseDate(cols[idx.call1]) : null
-    const call2   = idx.call2 >= 0 ? parseDate(cols[idx.call2]) : null
+    const nome = cols[idx.nome]?.trim() || null
+    const tipo = cols[idx.tipo]?.trim() || null
+    const email = idx.email >= 0 ? cols[idx.email]?.trim() || null : null
+    const etapa = idx.etapa >= 0 ? cols[idx.etapa]?.trim() || null : null
+    const call1 = idx.call1 >= 0 ? parseDate(cols[idx.call1]) : null
+    const call2 = idx.call2 >= 0 ? parseDate(cols[idx.call2]) : null
     const csatRaw = idx.csat1 >= 0 ? cols[idx.csat1]?.trim() : null
-    const csat1   = csatRaw ? parseFloat(csatRaw) : null
-    const csatC1  = idx.csatCom1 >= 0 ? (cols[idx.csatCom1]?.trim() || null) : null
-    const csatC2  = idx.csatCom2 >= 0 ? (cols[idx.csatCom2]?.trim() || null) : null
+    const csat1 = csatRaw ? parseFloat(csatRaw) : null
+    const csatC1 = idx.csatCom1 >= 0 ? cols[idx.csatCom1]?.trim() || null : null
+    const csatC2 = idx.csatCom2 >= 0 ? cols[idx.csatCom2]?.trim() || null : null
 
     const phones = [phone]
     const alt = brAlternate(phone)
@@ -191,23 +230,25 @@ async function main() {
       profileData: {
         contact_name: nome,
         email,
-        tipos:        tipo ? [tipo] : [],
-        propriedade:  true,
-        updated_at:   now,
+        tipos: tipo ? [tipo] : [],
+        propriedade: true,
+        updated_at: now,
       },
       csData: {
-        etapa_negocio:  etapa,
-        call_1_date:    call1,
-        call_2_date:    call2,
-        csat_1:         isNaN(csat1 as number) ? null : csat1,
+        etapa_negocio: etapa,
+        call_1_date: call1,
+        call_2_date: call2,
+        csat_1: isNaN(csat1 as number) ? null : csat1,
         csat_comment_1: csatC1,
         csat_comment_2: csatC2,
-        updated_at:     now,
+        updated_at: now,
       },
     })
   }
 
-  console.log(`\n   ✅ ${rows.length} entradas processadas (${skipped} sem telefone ignoradas)\n`)
+  console.log(
+    `\n   ✅ ${rows.length} entradas processadas (${skipped} sem telefone ignoradas)\n`,
+  )
 
   // ── 3. Upsert client_profiles ──────────────────────────────────────────────
   // Upserta ambas as variações de telefone (com/sem 9) para garantir o match
@@ -216,16 +257,21 @@ async function main() {
   const profileRows = rows.flatMap(({ phones, profileData }) =>
     phones.map((p) => ({ phone_number: p, ...profileData })),
   )
-  let profOk = 0, profErr = 0
+  let profOk = 0,
+    profErr = 0
 
   for (let i = 0; i < profileRows.length; i += BATCH) {
     const batch = profileRows.slice(i, i + BATCH)
     try {
       await upsertBatch('client_profiles', batch, 'phone_number')
       profOk += batch.length
-      process.stdout.write(`   Lote ${Math.floor(i / BATCH) + 1}/${Math.ceil(profileRows.length / BATCH)} ✓\r`)
+      process.stdout.write(
+        `   Lote ${Math.floor(i / BATCH) + 1}/${Math.ceil(profileRows.length / BATCH)} ✓\r`,
+      )
     } catch (e: any) {
-      console.error(`\n   ❌ Erro lote ${Math.floor(i / BATCH) + 1}: ${e.message}`)
+      console.error(
+        `\n   ❌ Erro lote ${Math.floor(i / BATCH) + 1}: ${e.message}`,
+      )
       profErr += batch.length
     }
   }
@@ -236,7 +282,8 @@ async function main() {
   console.log('🔍 Buscando IDs de client_profiles...')
   const allPhones = rows.flatMap((r) => r.phones)
   const phoneChunks: string[][] = []
-  for (let i = 0; i < allPhones.length; i += 100) phoneChunks.push(allPhones.slice(i, i + 100))
+  for (let i = 0; i < allPhones.length; i += 100)
+    phoneChunks.push(allPhones.slice(i, i + 100))
 
   const phoneToId = new Map<string, string>()
   for (const chunk of phoneChunks) {
@@ -265,15 +312,20 @@ async function main() {
   }
   const csRows = Array.from(csRowsMap.values())
 
-  let csOk = 0, csErr = 0
+  let csOk = 0,
+    csErr = 0
   for (let i = 0; i < csRows.length; i += BATCH) {
     const batch = csRows.slice(i, i + BATCH)
     try {
       await upsertBatch('meus_clientes', batch, 'client_id')
       csOk += batch.length
-      process.stdout.write(`   Lote ${Math.floor(i / BATCH) + 1}/${Math.ceil(csRows.length / BATCH)} ✓\r`)
+      process.stdout.write(
+        `   Lote ${Math.floor(i / BATCH) + 1}/${Math.ceil(csRows.length / BATCH)} ✓\r`,
+      )
     } catch (e: any) {
-      console.error(`\n   ❌ Erro lote ${Math.floor(i / BATCH) + 1}: ${e.message}`)
+      console.error(
+        `\n   ❌ Erro lote ${Math.floor(i / BATCH) + 1}: ${e.message}`,
+      )
       csErr += batch.length
     }
   }
