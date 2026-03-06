@@ -47,8 +47,11 @@ import {
   Clock,
   UserCheck,
   Calendar as CalendarIcon,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react'
 import { whatsappService } from '@/lib/services/whatsapp'
+import { calendarService, CalendarEvent } from '@/lib/services/calendar'
 import { useToast } from '@/hooks/use-toast'
 
 function Trend({
@@ -114,6 +117,15 @@ export default function Dashboard() {
   const [statusDist, setStatusDist] = useState<any[]>([])
   const [topRules, setTopRules] = useState<any[]>([])
   const [lastConvs, setLastConvs] = useState<any[]>([])
+  const [todayMeetings, setTodayMeetings] = useState<CalendarEvent[]>([])
+  const [meetingAnalytics, setMeetingAnalytics] = useState<{
+    total: number
+    showedUp: number
+    tracked: number
+    showUpRate: number | null
+    peakHour: string
+    hoursDistribution: { hour: string; count: number }[]
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [isFetching, setIsFetching] = useState(false)
 
@@ -147,7 +159,7 @@ export default function Dashboard() {
 
         const { prevFrom, prevTo } = getPreviousPeriod(start, end)
 
-        const [kpis, prevKpis, perDay, perf, dist, rules, convs] =
+        const [kpis, prevKpis, perDay, perf, dist, rules, convs, meetings, analytics] =
           await Promise.all([
             whatsappService.getDashboardStats(start, end),
             whatsappService.getDashboardStats(prevFrom, prevTo),
@@ -156,6 +168,8 @@ export default function Dashboard() {
             whatsappService.getStatusDistribution(),
             whatsappService.getTopRules(),
             whatsappService.getLastUpdatedConversations(),
+            calendarService.getTodayMeetings(),
+            calendarService.getMeetingAnalytics(start, end),
           ])
 
         setStats(kpis)
@@ -165,6 +179,8 @@ export default function Dashboard() {
         setStatusDist(dist)
         setTopRules(rules)
         setLastConvs(convs)
+        setTodayMeetings(meetings)
+        setMeetingAnalytics(analytics)
       } catch (error) {
         toast({
           variant: 'destructive',
@@ -378,6 +394,167 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Reuniões do Dia */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-[#25D366]" />
+                Reuniões de Hoje
+              </CardTitle>
+              <CardDescription>
+                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="text-base px-3 py-1">
+              {todayMeetings.length}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            {todayMeetings.length === 0 ? (
+              <p className="text-sm text-gray-400 py-2">Nenhuma reunião agendada para hoje.</p>
+            ) : (
+              <div className="divide-y">
+                {todayMeetings.map((ev) => (
+                  <div key={ev.id} className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm font-semibold text-[#111B21] w-12 shrink-0">
+                        {new Date(ev.start_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[#111B21]">{ev.title}</p>
+                        {ev.client_email && (
+                          <p className="text-xs text-gray-400">{ev.client_email}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {/* Show-up: só mostra para reuniões que já passaram */}
+                      {new Date(ev.start_at) < new Date() && (
+                        <div className="flex gap-1">
+                          <button
+                            title="Compareceu"
+                            onClick={async () => {
+                              await calendarService.updateShowUp(ev.id, true)
+                              setTodayMeetings((prev) =>
+                                prev.map((m) => m.id === ev.id ? { ...m, show_up: true } as any : m)
+                              )
+                            }}
+                            className={cn(
+                              'p-1.5 rounded-full transition-colors',
+                              (ev as any).show_up === true
+                                ? 'bg-[#25D366]/20 text-[#25D366]'
+                                : 'bg-gray-100 text-gray-400 hover:text-[#25D366]',
+                            )}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            title="Não compareceu"
+                            onClick={async () => {
+                              await calendarService.updateShowUp(ev.id, false)
+                              setTodayMeetings((prev) =>
+                                prev.map((m) => m.id === ev.id ? { ...m, show_up: false } as any : m)
+                              )
+                            }}
+                            className={cn(
+                              'p-1.5 rounded-full transition-colors',
+                              (ev as any).show_up === false
+                                ? 'bg-rose-100 text-rose-500'
+                                : 'bg-gray-100 text-gray-400 hover:text-rose-500',
+                            )}
+                          >
+                            <ThumbsDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                      {ev.meet_link && (
+                        <a
+                          href={ev.meet_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs px-3 py-1 rounded-full bg-[#25D366]/10 text-[#25D366] font-medium hover:bg-[#25D366]/20 transition-colors"
+                        >
+                          Entrar
+                        </a>
+                      )}
+                      {ev.client_phone && (
+                        <button
+                          onClick={() => navigate('/whatsapp', { state: { selectedId: ev.client_phone } })}
+                          className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors"
+                        >
+                          Ver Chat
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Analytics de Reuniões */}
+        {meetingAnalytics && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <div className="lg:col-span-3 grid grid-cols-3 gap-4 content-start">
+              <Card className="border-l-4 border-l-[#25D366]">
+                <CardHeader className="pb-1 pt-4 px-4">
+                  <CardTitle className="text-xs font-medium text-gray-500">Reuniões no Período</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-[#111B21]">{meetingAnalytics.total}</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-[#3B82F6]">
+                <CardHeader className="pb-1 pt-4 px-4">
+                  <CardTitle className="text-xs font-medium text-gray-500">Taxa de Show-up</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-[#111B21]">
+                    {meetingAnalytics.showUpRate !== null
+                      ? `${meetingAnalytics.showUpRate}%`
+                      : '—'}
+                  </p>
+                  {meetingAnalytics.tracked > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {meetingAnalytics.showedUp}/{meetingAnalytics.tracked} marcadas
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-[#FBBF24]">
+                <CardHeader className="pb-1 pt-4 px-4">
+                  <CardTitle className="text-xs font-medium text-gray-500">Horário Pico</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-[#111B21]">{meetingAnalytics.peakHour}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="lg:col-span-4">
+              <CardHeader>
+                <CardTitle>Horários das Reuniões</CardTitle>
+                <CardDescription>Distribuição por horário (últimos 60 dias)</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={meetingAnalytics.hoursDistribution}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="hour" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="count" name="Reuniões" fill="#25D366" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Graphs */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import {
   MoreVertical,
   Search,
@@ -7,8 +7,10 @@ import {
   Mic,
   Send,
   ArrowLeft,
+  MessageCircle,
+  Loader2,
 } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -18,7 +20,8 @@ import {
 } from '@/components/ui/tooltip'
 import { MessageBubble } from './MessageBubble'
 import { AISuggestion } from './AISuggestion'
-import { Message, whatsappService } from '@/lib/services/whatsapp'
+import { Message, whatsappService, normalizePhone } from '@/lib/services/whatsapp'
+import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
@@ -66,27 +69,36 @@ function groupMessagesByDate(messages: Message[]) {
 interface ChatWindowProps {
   conversation?: any
   messages: Message[]
+  hasMore: boolean
+  loadingMore: boolean
+  scrollTrigger: number
   onBack: () => void
-  onSendMessage: (text: string) => void
   onCloseConversation: () => void
   onReopenConversation: () => void
   onMessageSent?: (message: Message) => void
+  onLoadMore: () => void
 }
 
 export function ChatWindow({
   conversation,
   messages,
+  hasMore,
+  loadingMore,
+  scrollTrigger,
   onBack,
-  onSendMessage,
   onCloseConversation,
   onReopenConversation,
   onMessageSent,
+  onLoadMore,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('')
   const [suggestion, setSuggestion] = useState<any>(null)
   const [showSuggestion, setShowSuggestion] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  // Guard para não disparar load more múltiplas vezes seguidas
+  const loadingMoreGuardRef = useRef(false)
   const { toast } = useToast()
 
   // Reset state when conversation changes
@@ -103,26 +115,86 @@ export function ChatWindow({
     }
   }, [conversation?.phone_number])
 
-  // Scroll to top on new messages as they are ordered newest first
+  // Scroll para o fundo quando scrollTrigger mudar (nova mensagem ou conversa aberta)
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = 0
+    if (scrollTrigger && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'instant' })
     }
-  }, [messages])
+  }, [scrollTrigger])
+
+  // Libera guard de load more quando loadingMore volta para false
+  useEffect(() => {
+    if (!loadingMore) {
+      loadingMoreGuardRef.current = false
+    }
+  }, [loadingMore])
+
+  // Preserva posição do scroll ao prepend de mensagens antigas
+  const prevScrollHeightRef = useRef(0)
+  useLayoutEffect(() => {
+    if (loadingMore && scrollRef.current) {
+      prevScrollHeightRef.current = scrollRef.current.scrollHeight
+    }
+  }, [loadingMore])
+
+  useLayoutEffect(() => {
+    if (!loadingMore && prevScrollHeightRef.current && scrollRef.current) {
+      const diff = scrollRef.current.scrollHeight - prevScrollHeightRef.current
+      if (diff > 0) {
+        scrollRef.current.scrollTop = diff
+      }
+      prevScrollHeightRef.current = 0
+    }
+  }, [messages, loadingMore])
+
+  // Realtime: nova sugestão gerada para esta conversa
+  useEffect(() => {
+    if (!conversation?.phone_number) return
+    const base = normalizePhone(conversation.phone_number)
+
+    const channel = supabase
+      .channel(`realtime-suggestions-${base}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'suggestions' },
+        (payload) => {
+          const sugg = payload.new
+          const suggBase = normalizePhone((sugg.phone_number as string) ?? '')
+          if (suggBase === base && !sugg.approved_at) {
+            setSuggestion(sugg)
+            setShowSuggestion(true)
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [conversation?.phone_number])
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (
+      e.currentTarget.scrollTop < 80 &&
+      hasMore &&
+      !loadingMoreGuardRef.current
+    ) {
+      loadingMoreGuardRef.current = true
+      onLoadMore()
+    }
+  }
 
   const handleSendMessage = async () => {
     if (inputText.trim() && conversation) {
       setIsSending(true)
       try {
-        // Se houver uma sugestão pendente e o texto for enviado (mesmo que editado),
-        // usamos a Edge Function para marcar como resolvida
-        let sentMessage
+        let sentMessage: Message
         if (suggestion) {
-          sentMessage = await whatsappService.sendFinalMessage(
+          sentMessage = (await whatsappService.sendFinalMessage(
             conversation.phone_number,
             inputText,
             suggestion.id,
-          )
+          )) as Message
         } else {
           sentMessage = await whatsappService.sendMessage(
             conversation.phone_number,
@@ -133,7 +205,7 @@ export function ChatWindow({
         onMessageSent?.(sentMessage)
         setInputText('')
         setSuggestion(null)
-      } catch (error) {
+      } catch {
         toast({
           variant: 'destructive',
           title: 'Erro',
@@ -156,15 +228,15 @@ export function ChatWindow({
     if (suggestion && conversation) {
       setIsSending(true)
       try {
-        const sentMessage = await whatsappService.approveSuggestion(
+        const sentMessage = (await whatsappService.approveSuggestion(
           suggestion.id,
           conversation.phone_number,
           suggestion.suggestion_text,
-        )
+        )) as Message
         onMessageSent?.(sentMessage)
         setShowSuggestion(false)
         setSuggestion(null)
-      } catch (error) {
+      } catch {
         toast({
           variant: 'destructive',
           title: 'Erro',
@@ -180,12 +252,8 @@ export function ChatWindow({
     return (
       <div className="flex-1 h-full bg-[#F0F2F5] border-b-[6px] border-[#25D366] flex flex-col items-center justify-center text-center p-8">
         <div className="max-w-[560px]">
-          <div className="mb-8 relative inline-flex items-center justify-center w-64 h-64 rounded-full bg-[#E9EDEF]">
-            <img
-              src="https://img.usecurling.com/i?q=secure%20chat&color=green"
-              alt="Secure Chat"
-              className="w-32 h-32 opacity-80"
-            />
+          <div className="mb-8 inline-flex items-center justify-center w-32 h-32 rounded-full bg-[#E9EDEF]">
+            <MessageCircle className="w-16 h-16 text-[#25D366] opacity-70" />
           </div>
           <h1 className="text-3xl font-light text-[#41525d] mb-4">
             WhatsApp para Operadores
@@ -201,6 +269,7 @@ export function ChatWindow({
   }
 
   const contactName = conversation.contact_name || conversation.phone_number
+  const initials = contactName.substring(0, 2).toUpperCase()
 
   return (
     <div className="flex flex-col h-full bg-[#EFEAE2]">
@@ -217,10 +286,7 @@ export function ChatWindow({
           </Button>
 
           <Avatar className="cursor-pointer">
-            <AvatarImage
-              src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`}
-            />
-            <AvatarFallback>{contactName.substring(0, 2)}</AvatarFallback>
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
 
           <div className="flex flex-col">
@@ -271,19 +337,41 @@ export function ChatWindow({
             </TooltipTrigger>
             <TooltipContent>Pesquisar</TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Mais opções</TooltipContent>
+          </Tooltip>
         </div>
       </header>
 
       {/* Messages Area */}
       <div
-        className="flex-1 overflow-y-auto p-4 md:p-[5%] bg-repeat bg-[length:400px_400px]"
         ref={scrollRef}
-        style={{
-          backgroundColor: '#E5DDD5',
-          backgroundImage:
-            "linear-gradient(rgba(229, 221, 213, 0.9), rgba(229, 221, 213, 0.9)), url('https://img.usecurling.com/i?q=seamless%20pattern&color=gray')",
-        }}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 md:p-[5%]"
+        style={{ backgroundColor: '#E5DDD5' }}
       >
+        {/* Indicador de carregando mensagens antigas */}
+        {loadingMore && (
+          <div className="flex justify-center py-3">
+            <Loader2 className="w-5 h-5 animate-spin text-[#54656F]" />
+          </div>
+        )}
+
+        {/* Indicador de que há mais mensagens acima */}
+        {hasMore && !loadingMore && (
+          <div className="flex justify-center py-2">
+            <span className="text-[11px] text-[#54656F] bg-white/60 px-3 py-1 rounded-full">
+              Role para cima para ver mensagens anteriores
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-1">
           {groupMessagesByDate(messages).map(
             ({ dateLabel, messages: dayMessages }) => (
@@ -301,6 +389,9 @@ export function ChatWindow({
             ),
           )}
         </div>
+
+        {/* Âncora para scroll automático ao fundo */}
+        <div ref={bottomRef} />
       </div>
 
       {/* Footer Area */}

@@ -1,7 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Conversation } from '@/lib/services/whatsapp'
 
 interface ConversationItemProps {
   conversation: any
@@ -32,11 +31,7 @@ export function ConversationItem({
       )}
     >
       <Avatar className="h-12 w-12">
-        <AvatarImage
-          src={`https://img.usecurling.com/ppl/thumbnail?seed=${conversation.phone_number}`}
-          alt={contactName}
-        />
-        <AvatarFallback>{contactName.substring(0, 2)}</AvatarFallback>
+        <AvatarFallback>{contactName.substring(0, 2).toUpperCase()}</AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">

@@ -46,6 +46,8 @@ export function ClientModal({
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
+  const [etapa, setEtapa] = useState<string | null>(null)
+  const [propriedade, setPropriedade] = useState(false)
   const [meetings, setMeetings] = useState<TldvMeeting[]>([])
   const [loadingMeetings, setLoadingMeetings] = useState(false)
 
@@ -57,6 +59,8 @@ export function ClientModal({
     setObservations(client.observations ?? '')
     setSelectedTipos(client.tipos ?? [])
     setTags(client.tags ?? [])
+    setEtapa(client.etapa_negocio ?? null)
+    setPropriedade(client.propriedade ?? false)
   }, [client])
 
   const loadMeetings = async () => {
@@ -83,6 +87,7 @@ export function ClientModal({
         observations: observations.trim() || null,
         tipos: selectedTipos,
         tags,
+        etapa_negocio: etapa,
       })
       toast({ title: 'Salvo', description: 'Perfil do cliente atualizado.' })
       onSaved()
@@ -187,6 +192,31 @@ export function ClientModal({
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-[#667781]">
+                  Etapa do Negócio
+                </label>
+                <select
+                  value={etapa ?? ''}
+                  onChange={(e) => setEtapa(e.target.value || null)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Selecione a etapa...</option>
+                  <option value="Lead Qualificado">Lead Qualificado</option>
+                  <option value="1ª Reunião Agendada">1ª Reunião Agendada</option>
+                  <option value="Aguardando Contrato">Aguardando Contrato</option>
+                  <option value="Cliente Ativo">Cliente Ativo</option>
+                  <option value="Churn">Churn</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <Badge variant={propriedade ? "default" : "outline"} className={propriedade ? "bg-[#25D366]" : ""}>
+                  {propriedade ? "Propriedade Ativa" : "Sem Propriedade"}
+                </Badge>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-[#667781]">Tipo</label>
               <div className="flex flex-wrap gap-2">
@@ -194,11 +224,10 @@ export function ClientModal({
                   <button
                     key={tipo}
                     onClick={() => toggleTipo(tipo)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
-                      selectedTipos.includes(tipo)
-                        ? tipoColors[tipo]
-                        : 'bg-white text-[#667781] border-[#E2E8F0] hover:border-[#25D366]'
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${selectedTipos.includes(tipo)
+                      ? tipoColors[tipo]
+                      : 'bg-white text-[#667781] border-[#E2E8F0] hover:border-[#25D366]'
+                      }`}
                   >
                     {tipo}
                   </button>
@@ -281,6 +310,55 @@ export function ClientModal({
                 className="resize-none"
               />
             </div>
+
+            {(client.call_1_date || client.call_2_date) && (
+              <div className="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <label className="text-xs font-bold text-[#111B21] uppercase tracking-wider">
+                  Histórico de Calls
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {client.call_1_date && (
+                    <div className="text-xs">
+                      <div className="text-[#667781] mb-1">Call 1</div>
+                      <div className="font-medium flex items-center justify-between">
+                        {client.call_1_date}
+                        {client.call_1_link && (
+                          <a href={client.call_1_link} target="_blank" rel="noreferrer">
+                            <ExternalLink className="w-3 h-3 text-[#25D366]" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {client.call_2_date && (
+                    <div className="text-xs">
+                      <div className="text-[#667781] mb-1">Call 2</div>
+                      <div className="font-medium flex items-center justify-between">
+                        {client.call_2_date}
+                        {client.call_2_link && (
+                          <a href={client.call_2_link} target="_blank" rel="noreferrer">
+                            <ExternalLink className="w-3 h-3 text-[#25D366]" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {client.csat_1 && (
+                  <div className="pt-2 mt-2 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[#667781]">CSAT 1</span>
+                      <span className="text-xs font-bold text-yellow-600">★ {client.csat_1}/5</span>
+                    </div>
+                    {client.csat_comment_1 && (
+                      <p className="text-[10px] text-[#667781] italic mt-1 bg-white p-1.5 rounded">
+                        "{client.csat_comment_1}"
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-end pt-2">
               <Button

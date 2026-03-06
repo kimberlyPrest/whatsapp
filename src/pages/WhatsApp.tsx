@@ -1,8 +1,13 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/whatsapp/Sidebar'
 import { ChatWindow } from '@/components/whatsapp/ChatWindow'
-import { whatsappService, Conversation, Message } from '@/lib/services/whatsapp'
+import {
+  whatsappService,
+  Message,
+  normalizePhone,
+} from '@/lib/services/whatsapp'
+import { supabase } from '@/lib/supabase/client'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -16,68 +21,132 @@ export default function WhatsApp() {
   )
   const [statusFilter, setStatusFilter] = useState<string>('Todas')
   const [searchTerm, setSearchTerm] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [scrollTrigger, setScrollTrigger] = useState(0)
   const isMobile = useIsMobile()
   const { toast } = useToast()
 
-  // Fetch conversations
+  // Ref para evitar stale closures nos callbacks de realtime
+  const selectedIdRef = useRef<string | undefined>(selectedId)
+  useEffect(() => {
+    selectedIdRef.current = selectedId
+  }, [selectedId])
+
   const loadConversations = async () => {
     try {
       const data = await whatsappService.getConversations()
       setConversations(data)
-    } catch (error: any) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Erro',
         description: 'Erro ao carregar conversas',
       })
-    } finally {
-      setLoading(false)
     }
   }
 
+  // Carga inicial
   useEffect(() => {
     loadConversations()
   }, [])
 
-  // Fetch messages when conversation selected
+  // Subscriptions de tempo real
   useEffect(() => {
-    if (selectedId) {
-      const loadMessages = async () => {
-        try {
-          const data = await whatsappService.getMessages(selectedId)
-          setMessages(data)
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'Erro',
-            description: 'Erro ao carregar mensagens',
-          })
-        }
-      }
-      loadMessages()
-    } else {
-      setMessages([])
+    // Qualquer mudança em conversations → atualiza sidebar
+    const convChannel = supabase
+      .channel('realtime-conversations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversations' },
+        () => {
+          loadConversations()
+        },
+      )
+      .subscribe()
+
+    // Inserção de mensagem → append na conversa ativa
+    const msgChannel = supabase
+      .channel('realtime-messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const msg = payload.new as Message
+          const msgBase = normalizePhone(msg.phone_number)
+          const currentBase = selectedIdRef.current
+            ? normalizePhone(selectedIdRef.current)
+            : null
+
+          if (currentBase && msgBase === currentBase) {
+            setMessages((prev) => {
+              // Dedup: mensagem pode já ter sido adicionada optimisticamente
+              if (prev.some((m) => m.id === msg.id)) return prev
+              return [...prev, msg]
+            })
+            setScrollTrigger(Date.now())
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(convChannel)
+      supabase.removeChannel(msgChannel)
     }
+  }, [])
+
+  // Carrega mensagens ao selecionar conversa
+  useEffect(() => {
+    if (!selectedId) {
+      setMessages([])
+      setHasMore(false)
+      return
+    }
+
+    const loadMessages = async () => {
+      try {
+        const data = await whatsappService.getMessages(selectedId, { limit: 20 })
+        setMessages(data)
+        setHasMore(data.length === 20)
+        setScrollTrigger(Date.now())
+        // Zera contador de não lidas
+        whatsappService.resetUnreadCount(selectedId)
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Erro ao carregar mensagens',
+        })
+      }
+    }
+
+    loadMessages()
   }, [selectedId])
 
   const handleSelectConversation = (id: string) => {
     setSelectedId(id)
   }
 
-  const handleSendMessage = async (text: string) => {
-    if (!selectedId) return
-
+  const handleLoadMore = async () => {
+    if (!selectedId || loadingMore || !hasMore || messages.length === 0) return
+    setLoadingMore(true)
     try {
-      const newMessage = await whatsappService.sendMessage(selectedId, text)
-      setMessages((prev) => [newMessage, ...prev])
-      loadConversations() // Refresh list
-    } catch (error: any) {
+      const oldest = messages[0].created_at
+      const older = await whatsappService.getMessages(selectedId, {
+        before: oldest,
+        limit: 20,
+      })
+      setHasMore(older.length === 20)
+      setMessages((prev) => [...older, ...prev])
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Erro ao enviar mensagem',
+        description: 'Erro ao carregar mensagens antigas',
       })
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -86,8 +155,8 @@ export default function WhatsApp() {
     try {
       await whatsappService.closeConversation(selectedId)
       toast({ title: 'Sucesso', description: 'Conversa finalizada' })
-      loadConversations()
-    } catch (error) {
+      // Realtime subscription atualiza conversations automaticamente
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -101,8 +170,7 @@ export default function WhatsApp() {
     try {
       await whatsappService.reopenConversation(selectedId)
       toast({ title: 'Sucesso', description: 'Conversa reaberta' })
-      loadConversations()
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -123,8 +191,12 @@ export default function WhatsApp() {
   }, [conversations, statusFilter, searchTerm])
 
   const handleMessageSent = (newMessage: Message) => {
-    setMessages((prev) => [newMessage, ...prev])
-    loadConversations() // Refresh sidebar counts and last message
+    setMessages((prev) => {
+      // Dedup: realtime pode já ter adicionado a mensagem
+      if (prev.some((m) => m.id === newMessage.id)) return prev
+      return [...prev, newMessage]
+    })
+    setScrollTrigger(Date.now())
   }
 
   const selectedConversation = conversations.find(
@@ -154,11 +226,14 @@ export default function WhatsApp() {
           <ChatWindow
             conversation={selectedConversation}
             messages={messages}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            scrollTrigger={scrollTrigger}
             onBack={() => setSelectedId(undefined)}
-            onSendMessage={handleSendMessage}
             onCloseConversation={handleCloseConversation}
             onReopenConversation={handleReopenConversation}
             onMessageSent={handleMessageSent}
+            onLoadMore={handleLoadMore}
           />
         </div>
       </div>

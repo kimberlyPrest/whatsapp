@@ -144,10 +144,67 @@ Deno.serve(async (req) => {
       if (transcription) messageText = transcription
     }
 
-    // 1. Inserir mensagem (ignorar duplicatas pelo hash)
+    // =========================================================================
+    // NOVO FLUXO: client_profiles -> conversations -> messages
+    // =========================================================================
+
+    // 1. Garantir que o cliente existe em client_profiles e obter o ID
+    let { data: profile } = await supabase
+      .from('client_profiles')
+      .select('id')
+      .eq('phone_number', phone)
+      .maybeSingle()
+
+    if (!profile) {
+      const { data: newProfile, error: profileErr } = await supabase
+        .from('client_profiles')
+        .insert({ phone_number: phone, contact_name: contactName })
+        .select('id')
+        .single()
+
+      if (profileErr) console.error('Erro ao criar client_profile:', profileErr)
+      profile = newProfile
+    }
+
+    // 2. Upsert da conversa (criar se não existir, atualizar se existir)
+    const { data: existingConv } = await supabase
+      .from('conversations')
+      .select('id, unread_count')
+      .eq('phone_number', phone)
+      .maybeSingle()
+
+    const newUnreadCount = (existingConv?.unread_count ?? 0) + 1
+
+    const convPayload: any = {
+      phone_number: phone,
+      remote_jid: remoteJid,
+      contact_name: contactName,
+      last_message_text: messageText || '[mídia]',
+      last_message_at: timestamp,
+      last_sender: 'client',
+      unread_count: newUnreadCount,
+      manually_closed: false,
+    }
+
+    // Liga a conversa ao cliente via ForeignKey
+    if (profile?.id) convPayload.client_id = profile.id
+
+    const { data: convData, error: convError } = await supabase
+      .from('conversations')
+      .upsert(convPayload, { onConflict: 'phone_number' })
+      .select('id')
+      .single()
+
+    if (convError) console.error('Erro ao upsert conversa:', convError)
+
+    // Fallback: se convData.id não estiver disponível por algum motivo, tentar buscar de novo
+    const conversationId = convData?.id || existingConv?.id
+
+    // 3. Inserir mensagem (ignorar duplicatas pelo hash)
     const { error: msgError } = await supabase.from('messages').upsert(
       {
-        phone_number: phone,
+        conversation_id: conversationId, // Nova ForeignKey
+        phone_number: phone,             // Mantido por retrocompatibilidade temporária
         remote_jid: remoteJid,
         sender: 'client',
         message_text: messageText || null,
@@ -163,35 +220,10 @@ Deno.serve(async (req) => {
 
     if (msgError) console.error('Erro ao inserir mensagem:', msgError)
 
-    // 2. Upsert da conversa (criar se não existir, atualizar se existir)
-    const { data: existingConv } = await supabase
-      .from('conversations')
-      .select('unread_count')
-      .eq('phone_number', phone)
-      .maybeSingle()
-
-    const newUnreadCount = (existingConv?.unread_count ?? 0) + 1
-
-    const { error: convError } = await supabase.from('conversations').upsert(
-      {
-        phone_number: phone,
-        remote_jid: remoteJid,
-        contact_name: contactName,
-        last_message_text: messageText || '[mídia]',
-        last_message_at: timestamp,
-        last_sender: 'client',
-        unread_count: newUnreadCount,
-        manually_closed: false,
-      },
-      { onConflict: 'phone_number' },
-    )
-
-    if (convError) console.error('Erro ao upsert conversa:', convError)
-
-    console.log(`✅ Mensagem salva | phone: ${phone}`)
+    console.log(`✅ Mensagem salva | phone: ${phone} | conv: ${conversationId}`)
 
     return new Response(
-      JSON.stringify({ success: true, phone_number: phone }),
+      JSON.stringify({ success: true, phone_number: phone, conversation_id: conversationId }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {

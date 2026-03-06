@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase/client'
 
 // Normaliza número de telefone removendo o sufixo JID do WhatsApp (@s.whatsapp.net, @c.us, etc)
-function normalizePhone(phone: string): string {
+export function normalizePhone(phone: string): string {
   return phone.split('@')[0]
 }
 
@@ -49,19 +49,30 @@ export const whatsappService = {
     })
   },
 
-  async getMessages(phoneNumber: string) {
+  async getMessages(
+    phoneNumber: string,
+    options?: { before?: string; limit?: number },
+  ) {
     const base = normalizePhone(phoneNumber)
-    // Busca mensagens com qualquer formato de phone_number (número limpo ou JID do WhatsApp)
-    const { data, error } = await supabase
+    const limit = options?.limit ?? 20
+
+    let query = supabase
       .from('messages')
       .select('*')
       .or(
         `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`,
       )
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
+      .limit(limit)
 
+    if (options?.before) {
+      query = query.lt('created_at', options.before)
+    }
+
+    const { data, error } = await query
     if (error) throw error
-    return data
+    // Retorna em ordem ascendente (mais antigo primeiro) para exibição
+    return ((data || []) as Message[]).reverse()
   },
 
   async sendMessage(phoneNumber: string, text: string) {
@@ -300,6 +311,16 @@ export const whatsappService = {
       .single()
     if (error) throw error
     return data
+  },
+
+  async resetUnreadCount(phoneNumber: string) {
+    const base = normalizePhone(phoneNumber)
+    await supabase
+      .from('conversations')
+      .update({ unread_count: 0 })
+      .or(
+        `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`,
+      )
   },
 
   async closeConversation(phoneNumber: string) {
