@@ -254,13 +254,16 @@ async function main() {
   // ── 5. Upsert meus_clientes usando client_id (UUID) ────────────────────────
   console.log('🚀 Upserting meus_clientes...')
 
-  // Para cada entrada da planilha, pega o primeiro phone que tem ID conhecido
-  const csRows: object[] = []
+  // Para cada entrada da planilha, pega o primeiro phone que tem ID conhecido.
+  // Usa Map para deduplicar por client_id — planilha pode ter telefones duplicados
+  // que apontam para o mesmo registro, causando erro 21000 no upsert.
+  const csRowsMap = new Map<string, object>()
   for (const { phones, csData } of rows) {
     const clientId = phones.map((p) => phoneToId.get(p)).find(Boolean)
     if (!clientId) continue
-    csRows.push({ client_id: clientId, ...csData })
+    csRowsMap.set(clientId, { client_id: clientId, ...csData })
   }
+  const csRows = Array.from(csRowsMap.values())
 
   let csOk = 0, csErr = 0
   for (let i = 0; i < csRows.length; i += BATCH) {

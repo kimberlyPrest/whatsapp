@@ -28,6 +28,21 @@ function normalizePhone(jid: string): string {
   return jid.split('@')[0]
 }
 
+// ─── Links de agendamento por produto ────────────────────────────────────────
+
+const BOOKING_LINKS: Record<string, string> = {
+  Elite: 'https://meetings.hubspot.com/kimberly-prestes/skip',
+  Scale: 'https://meetings.hubspot.com/kimberly-prestes/elite',
+  Skip: 'https://meetings.hubspot.com/kimberly-prestes/skip',
+  Skio: 'https://meetings.hubspot.com/kimberly-prestes/skip',
+}
+
+const SCHEDULING_RE =
+  /agendar|marcar.*(reuni|call|conversa)|quero.*falar|vamos.*conversar|quando.*pode|disponibilidade|horário.*livre|próxima.*call/i
+
+const RESCHEDULING_RE =
+  /remarcar|reagendar|mudar.*horário|outro.*horário|não.*posso.*nesse|não.*consigo.*nesse|adiar|cancelar.*reuni/i
+
 // Gera sugestão para uma conversa específica
 async function generateSuggestion(
   supabase: ReturnType<typeof createClient>,
@@ -65,6 +80,68 @@ async function generateSuggestion(
     .join('\n')
 
   if (!recentText.trim()) return
+
+  // --- 0. Detecta intenção de reagendamento ou agendamento ---
+  const isRescheduling = RESCHEDULING_RE.test(recentText)
+  const isScheduling = !isRescheduling && SCHEDULING_RE.test(recentText)
+
+  const { data: clientProfile } = await supabase
+    .from('client_profiles')
+    .select('tipos')
+    .eq('phone_number', base)
+    .maybeSingle()
+
+  if (isRescheduling) {
+    const { data: nextEvent } = await supabase
+      .from('calendar_events')
+      .select('reschedule_link, title, start_at')
+      .eq('client_phone', base)
+      .gte('start_at', new Date().toISOString())
+      .not('reschedule_link', 'is', null)
+      .order('start_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (nextEvent?.reschedule_link) {
+      const dateStr = new Date(nextEvent.start_at).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Sao_Paulo',
+      })
+      const suggText =
+        `Claro, sem problema! Você pode reagendar nossa reunião de ${dateStr} pelo link abaixo:\n\n` +
+        `${nextEvent.reschedule_link}\n\n` +
+        `Qualquer dúvida estou à disposição! 😊`
+
+      await supabase.from('suggestions').insert({
+        phone_number: phone,
+        suggestion_text: suggText,
+        auto_send: false,
+        context_messages: { type: 'rescheduling', event_title: nextEvent.title },
+      })
+      console.log(`🔄 Sugestão de reagendamento gerada para ${phone}`)
+      return
+    }
+  }
+
+  // Links de agendamento para incluir no contexto do Gemini
+  let bookingContext = ''
+  if (isScheduling) {
+    const tipos = (clientProfile?.tipos as string[] | null) ?? []
+    const tiposComLink = tipos.filter((t: string) => BOOKING_LINKS[t])
+    const linksUnicos = [...new Set(tiposComLink.map((t: string) => BOOKING_LINKS[t]))]
+
+    if (linksUnicos.length === 1) {
+      bookingContext = `\n\n## Link de agendamento:\n${linksUnicos[0]}\nInclua este link na resposta.`
+    } else if (linksUnicos.length > 1) {
+      bookingContext =
+        `\n\n## Links de agendamento (cliente tem mais de um produto):\n` +
+        tiposComLink.map((t: string) => `- ${t}: ${BOOKING_LINKS[t]}`).join('\n') +
+        `\nInclua os dois links na resposta.`
+    }
+  }
 
   // --- 1. Verifica regras autônomas ---
   const { data: rules } = await supabase
@@ -174,7 +251,7 @@ ${history}
 
 ### Mensagem(ns) atual(is) do cliente:
 ${recentText}
-${examples}
+${examples}${bookingContext}
 
 ## Instrução:
 Gere UMA resposta adequada para enviar ao cliente agora.
