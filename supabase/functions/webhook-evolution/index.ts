@@ -89,15 +89,8 @@ Deno.serve(async (req) => {
     const data = body.data ?? {}
     const key = data.key ?? {}
 
-    // Ignorar mensagens enviadas por nós mesmos
-    if (key.fromMe === true) {
-      return new Response(
-        JSON.stringify({ skip: true, reason: 'Mensagem própria (fromMe)' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      )
-    }
+    const isFromMe = key.fromMe === true
+    const sender = isFromMe ? 'me' : 'client'
 
     const remoteJid: string = key.remoteJid ?? ''
     const phone = normalizePhone(remoteJid)
@@ -145,7 +138,7 @@ Deno.serve(async (req) => {
     }
 
     // =========================================================================
-    // NOVO FLUXO: client_profiles -> conversations -> messages
+    // FLUXO: client_profiles -> conversations -> messages
     // =========================================================================
 
     // 1. Garantir que o cliente existe em client_profiles e obter o ID
@@ -155,7 +148,7 @@ Deno.serve(async (req) => {
       .eq('phone_number', phone)
       .maybeSingle()
 
-    if (!profile) {
+    if (!profile && !isFromMe) {
       const { data: newProfile, error: profileErr } = await supabase
         .from('client_profiles')
         .insert({ phone_number: phone, contact_name: contactName })
@@ -164,6 +157,48 @@ Deno.serve(async (req) => {
 
       if (profileErr) console.error('Erro ao criar client_profile:', profileErr)
       profile = newProfile
+    } else if (!profile && isFromMe) {
+      // Mesmo sendo uma mensagem enviada por nós, se o cliente não existir (ex: iniciou pelo celular), criar
+      const { data: newProfile, error: profileErr } = await supabase
+        .from('client_profiles')
+        .insert({ phone_number: phone, contact_name: phone })
+        .select('id')
+        .single()
+      if (profileErr)
+        console.error('Erro ao criar client_profile (out):', profileErr)
+      profile = newProfile
+    }
+
+    // Deduplicação lógica para mensagens 'me' (enviadas pelo nosso app)
+    // O app já insere a mensagem diretamente no banco (sem hash) para resposta instantânea.
+    // Evitamos inserir de novo quando o webhook notifica o envio.
+    let skipMessageInsert = false
+    if (isFromMe) {
+      const timeWindow = new Date(Date.now() - 60000).toISOString()
+      const { data: recentMsgs } = await supabase
+        .from('messages')
+        .select('id, message_hash, message_text')
+        .eq('phone_number', phone)
+        .eq('sender', 'me')
+        .gte('created_at', timeWindow)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (recentMsgs && recentMsgs.length > 0) {
+        const exactMatch = recentMsgs.find(
+          (m) => (m.message_text || '').trim() === (messageText || '').trim(),
+        )
+        if (exactMatch) {
+          skipMessageInsert = true
+          // Se encontrou a mensagem local que não tinha hash, marcamos para previnir dublês
+          if (!exactMatch.message_hash) {
+            await supabase
+              .from('messages')
+              .update({ message_hash: msgHash })
+              .eq('id', exactMatch.id)
+          }
+        }
+      }
     }
 
     // 2. Upsert da conversa (criar se não existir, atualizar se existir)
@@ -173,17 +208,22 @@ Deno.serve(async (req) => {
       .eq('phone_number', phone)
       .maybeSingle()
 
-    const newUnreadCount = (existingConv?.unread_count ?? 0) + 1
+    // Se é do cliente, aumenta unread. Se é nossa, zera o unread.
+    const newUnreadCount = isFromMe ? 0 : (existingConv?.unread_count ?? 0) + 1
 
     const convPayload: any = {
       phone_number: phone,
       remote_jid: remoteJid,
-      contact_name: contactName,
+      contact_name:
+        !isFromMe && contactName !== 'Desconhecido' ? contactName : undefined,
       last_message_text: messageText || '[mídia]',
       last_message_at: timestamp,
-      last_sender: 'client',
+      last_sender: sender,
       unread_count: newUnreadCount,
-      manually_closed: false,
+    }
+
+    if (!existingConv) {
+      convPayload.manually_closed = false
     }
 
     // Liga a conversa ao cliente via ForeignKey
@@ -201,29 +241,37 @@ Deno.serve(async (req) => {
     const conversationId = convData?.id || existingConv?.id
 
     // 3. Inserir mensagem (ignorar duplicatas pelo hash)
-    const { error: msgError } = await supabase.from('messages').upsert(
-      {
-        conversation_id: conversationId, // Nova ForeignKey
-        phone_number: phone,             // Mantido por retrocompatibilidade temporária
-        remote_jid: remoteJid,
-        sender: 'client',
-        message_text: messageText || null,
-        message_type: messageType,
-        is_audio: isAudio,
-        audio_url: isAudio ? audioUrl : null,
-        transcription: transcription || null,
-        message_hash: msgHash,
-        created_at: timestamp,
-      },
-      { onConflict: 'message_hash', ignoreDuplicates: true },
+    if (!skipMessageInsert) {
+      const { error: msgError } = await supabase.from('messages').upsert(
+        {
+          conversation_id: conversationId,
+          phone_number: phone,
+          remote_jid: remoteJid,
+          sender: sender,
+          message_text: messageText || null,
+          message_type: messageType,
+          is_audio: isAudio,
+          audio_url: isAudio ? audioUrl : null,
+          transcription: transcription || null,
+          message_hash: msgHash,
+          created_at: timestamp,
+        },
+        { onConflict: 'message_hash', ignoreDuplicates: true },
+      )
+
+      if (msgError) console.error('Erro ao inserir mensagem:', msgError)
+    }
+
+    console.log(
+      `✅ Mensagem ${isFromMe ? 'enviada' : 'recebida'} processada | phone: ${phone} | conv: ${conversationId} | skipped_insert: ${skipMessageInsert}`,
     )
 
-    if (msgError) console.error('Erro ao inserir mensagem:', msgError)
-
-    console.log(`✅ Mensagem salva | phone: ${phone} | conv: ${conversationId}`)
-
     return new Response(
-      JSON.stringify({ success: true, phone_number: phone, conversation_id: conversationId }),
+      JSON.stringify({
+        success: true,
+        phone_number: phone,
+        conversation_id: conversationId,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
