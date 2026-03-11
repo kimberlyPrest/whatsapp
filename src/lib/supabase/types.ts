@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.1'
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -100,6 +100,7 @@ export type Database = {
         Row: {
           attendees: Json | null
           client_email: string | null
+          client_id: string | null
           client_phone: string | null
           created_at: string | null
           description: string | null
@@ -116,6 +117,7 @@ export type Database = {
         Insert: {
           attendees?: Json | null
           client_email?: string | null
+          client_id?: string | null
           client_phone?: string | null
           created_at?: string | null
           description?: string | null
@@ -132,6 +134,7 @@ export type Database = {
         Update: {
           attendees?: Json | null
           client_email?: string | null
+          client_id?: string | null
           client_phone?: string | null
           created_at?: string | null
           description?: string | null
@@ -145,7 +148,113 @@ export type Database = {
           synced_at?: string | null
           title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_calls: {
+        Row: {
+          call_date: string | null
+          call_link: string | null
+          call_number: number
+          client_id: string
+          created_at: string
+          csat_comment: string | null
+          csat_score: number | null
+          id: string
+          tldv_meeting_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          call_date?: string | null
+          call_link?: string | null
+          call_number: number
+          client_id: string
+          created_at?: string
+          csat_comment?: string | null
+          csat_score?: number | null
+          id?: string
+          tldv_meeting_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          call_date?: string | null
+          call_link?: string | null
+          call_number?: number
+          client_id?: string
+          created_at?: string
+          csat_comment?: string | null
+          csat_score?: number | null
+          id?: string
+          tldv_meeting_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_calls_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_calls_tldv_meeting_id_fkey"
+            columns: ["tldv_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "tldv_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_health_scores: {
+        Row: {
+          calculated_at: string | null
+          client_id: string
+          csat_avg: number | null
+          days_since_contact: number | null
+          engagement_score: number | null
+          id: string
+          overall_score: number | null
+          response_time_score: number | null
+          risk_level: string | null
+        }
+        Insert: {
+          calculated_at?: string | null
+          client_id: string
+          csat_avg?: number | null
+          days_since_contact?: number | null
+          engagement_score?: number | null
+          id?: string
+          overall_score?: number | null
+          response_time_score?: number | null
+          risk_level?: string | null
+        }
+        Update: {
+          calculated_at?: string | null
+          client_id?: string
+          csat_avg?: number | null
+          days_since_contact?: number | null
+          engagement_score?: number | null
+          id?: string
+          overall_score?: number | null
+          response_time_score?: number | null
+          risk_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_health_scores_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_profiles: {
         Row: {
@@ -208,6 +317,8 @@ export type Database = {
           outcome: string | null
           phone_number: string | null
           quality_score: number | null
+          source_type: string
+          tldv_meeting_id: string | null
           tone: string | null
         }
         Insert: {
@@ -222,6 +333,8 @@ export type Database = {
           outcome?: string | null
           phone_number?: string | null
           quality_score?: number | null
+          source_type?: string
+          tldv_meeting_id?: string | null
           tone?: string | null
         }
         Update: {
@@ -236,15 +349,24 @@ export type Database = {
           outcome?: string | null
           phone_number?: string | null
           quality_score?: number | null
+          source_type?: string
+          tldv_meeting_id?: string | null
           tone?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: 'conversation_embeddings_conversation_id_fkey'
-            columns: ['conversation_id']
+            foreignKeyName: "conversation_embeddings_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_embeddings_tldv_meeting_id_fkey"
+            columns: ["tldv_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "tldv_meetings"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -323,13 +445,49 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'conversations_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "conversations_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
+      }
+      message_templates: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          usage_count: number | null
+          variables: string[] | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -379,178 +537,34 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'messages_conversation_id_fkey'
-            columns: ['conversation_id']
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
           },
         ]
       }
       meus_clientes: {
         Row: {
-          call_1_date: string | null
-          call_1_link: string | null
-          call_10_date: string | null
-          call_10_link: string | null
-          call_11_date: string | null
-          call_11_link: string | null
-          call_12_date: string | null
-          call_12_link: string | null
-          call_2_date: string | null
-          call_2_link: string | null
-          call_3_date: string | null
-          call_3_link: string | null
-          call_4_date: string | null
-          call_4_link: string | null
-          call_5_date: string | null
-          call_5_link: string | null
-          call_6_date: string | null
-          call_6_link: string | null
-          call_7_date: string | null
-          call_7_link: string | null
-          call_8_date: string | null
-          call_8_link: string | null
-          call_9_date: string | null
-          call_9_link: string | null
           client_id: string
           created_at: string
-          csat_1: number | null
-          csat_10: number | null
-          csat_11: number | null
-          csat_12: number | null
-          csat_2: number | null
-          csat_3: number | null
-          csat_4: number | null
-          csat_5: number | null
-          csat_6: number | null
-          csat_7: number | null
-          csat_8: number | null
-          csat_9: number | null
-          csat_comment_1: string | null
-          csat_comment_10: string | null
-          csat_comment_11: string | null
-          csat_comment_12: string | null
-          csat_comment_2: string | null
-          csat_comment_3: string | null
-          csat_comment_4: string | null
-          csat_comment_5: string | null
-          csat_comment_6: string | null
-          csat_comment_7: string | null
-          csat_comment_8: string | null
-          csat_comment_9: string | null
           etapa_negocio: string | null
           id: string
           tldv_link: string | null
           updated_at: string
         }
         Insert: {
-          call_1_date?: string | null
-          call_1_link?: string | null
-          call_10_date?: string | null
-          call_10_link?: string | null
-          call_11_date?: string | null
-          call_11_link?: string | null
-          call_12_date?: string | null
-          call_12_link?: string | null
-          call_2_date?: string | null
-          call_2_link?: string | null
-          call_3_date?: string | null
-          call_3_link?: string | null
-          call_4_date?: string | null
-          call_4_link?: string | null
-          call_5_date?: string | null
-          call_5_link?: string | null
-          call_6_date?: string | null
-          call_6_link?: string | null
-          call_7_date?: string | null
-          call_7_link?: string | null
-          call_8_date?: string | null
-          call_8_link?: string | null
-          call_9_date?: string | null
-          call_9_link?: string | null
           client_id: string
           created_at?: string
-          csat_1?: number | null
-          csat_10?: number | null
-          csat_11?: number | null
-          csat_12?: number | null
-          csat_2?: number | null
-          csat_3?: number | null
-          csat_4?: number | null
-          csat_5?: number | null
-          csat_6?: number | null
-          csat_7?: number | null
-          csat_8?: number | null
-          csat_9?: number | null
-          csat_comment_1?: string | null
-          csat_comment_10?: string | null
-          csat_comment_11?: string | null
-          csat_comment_12?: string | null
-          csat_comment_2?: string | null
-          csat_comment_3?: string | null
-          csat_comment_4?: string | null
-          csat_comment_5?: string | null
-          csat_comment_6?: string | null
-          csat_comment_7?: string | null
-          csat_comment_8?: string | null
-          csat_comment_9?: string | null
           etapa_negocio?: string | null
           id?: string
           tldv_link?: string | null
           updated_at?: string
         }
         Update: {
-          call_1_date?: string | null
-          call_1_link?: string | null
-          call_10_date?: string | null
-          call_10_link?: string | null
-          call_11_date?: string | null
-          call_11_link?: string | null
-          call_12_date?: string | null
-          call_12_link?: string | null
-          call_2_date?: string | null
-          call_2_link?: string | null
-          call_3_date?: string | null
-          call_3_link?: string | null
-          call_4_date?: string | null
-          call_4_link?: string | null
-          call_5_date?: string | null
-          call_5_link?: string | null
-          call_6_date?: string | null
-          call_6_link?: string | null
-          call_7_date?: string | null
-          call_7_link?: string | null
-          call_8_date?: string | null
-          call_8_link?: string | null
-          call_9_date?: string | null
-          call_9_link?: string | null
           client_id?: string
           created_at?: string
-          csat_1?: number | null
-          csat_10?: number | null
-          csat_11?: number | null
-          csat_12?: number | null
-          csat_2?: number | null
-          csat_3?: number | null
-          csat_4?: number | null
-          csat_5?: number | null
-          csat_6?: number | null
-          csat_7?: number | null
-          csat_8?: number | null
-          csat_9?: number | null
-          csat_comment_1?: string | null
-          csat_comment_10?: string | null
-          csat_comment_11?: string | null
-          csat_comment_12?: string | null
-          csat_comment_2?: string | null
-          csat_comment_3?: string | null
-          csat_comment_4?: string | null
-          csat_comment_5?: string | null
-          csat_comment_6?: string | null
-          csat_comment_7?: string | null
-          csat_comment_8?: string | null
-          csat_comment_9?: string | null
           etapa_negocio?: string | null
           id?: string
           tldv_link?: string | null
@@ -558,11 +572,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'meus_clientes_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "meus_clientes_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: true
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -626,18 +640,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'suggestions_conversation_id_fkey'
-            columns: ['conversation_id']
+            foreignKeyName: "suggestions_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'suggestions_matched_rule_id_fkey'
-            columns: ['matched_rule_id']
+            foreignKeyName: "suggestions_matched_rule_id_fkey"
+            columns: ["matched_rule_id"]
             isOneToOne: false
-            referencedRelation: 'autonomous_rules'
-            referencedColumns: ['id']
+            referencedRelation: "autonomous_rules"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -646,6 +660,8 @@ export type Database = {
           client_id: string | null
           created_at: string | null
           id: string
+          match_status: string | null
+          matched_email: string | null
           meeting_date: string | null
           meeting_title: string | null
           participant_emails: string[] | null
@@ -658,6 +674,8 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           id?: string
+          match_status?: string | null
+          matched_email?: string | null
           meeting_date?: string | null
           meeting_title?: string | null
           participant_emails?: string[] | null
@@ -670,6 +688,8 @@ export type Database = {
           client_id?: string | null
           created_at?: string | null
           id?: string
+          match_status?: string | null
+          matched_email?: string | null
           meeting_date?: string | null
           meeting_title?: string | null
           participant_emails?: string[] | null
@@ -680,18 +700,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'tldv_meetings_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "tldv_meetings_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'tldv_meetings_phone_number_fkey'
-            columns: ['phone_number']
-            isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['phone_number']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -734,6 +747,39 @@ export type Database = {
           status?: string | null
           suggested_value?: string | null
           title?: string | null
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+          processing_status: string | null
+          processing_time_ms: number | null
+          source: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processing_status?: string | null
+          processing_time_ms?: number | null
+          source: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processing_status?: string | null
+          processing_time_ms?: number | null
+          source?: string
         }
         Relationships: []
       }
@@ -817,6 +863,42 @@ export type Database = {
           pending_suggestions: number
         }[]
       }
+      match_tldv_to_client: {
+        Args: { p_participant_emails: string[]; p_tldv_meeting_id: string }
+        Returns: string
+      }
+      search_conversations: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          conversation_id: string
+          phone_number: string
+          similarity: number
+          summary: string
+        }[]
+      }
+      search_embeddings: {
+        Args: {
+          match_count?: number
+          min_score?: number
+          query_embedding: string
+          source_filter?: string
+        }
+        Returns: {
+          conversation_id: string
+          conversation_summary: string
+          conversation_theme: string
+          id: string
+          quality_score: number
+          similarity: number
+          source_type: string
+          tldv_meeting_id: string
+          tone: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -827,33 +909,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -862,23 +944,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -887,23 +969,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -912,36 +994,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -949,6 +1031,7 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -998,6 +1081,7 @@ export const Constants = {
 //   synced_at: timestamp with time zone (nullable, default: now())
 //   created_at: timestamp with time zone (nullable, default: now())
 //   reschedule_link: text (nullable)
+//   client_id: uuid (nullable)
 // Table: chart_ai_performance
 //   date: date (nullable)
 //   approved: bigint (nullable)
@@ -1008,6 +1092,27 @@ export const Constants = {
 // Table: chart_status_distribution
 //   status: text (nullable)
 //   count: bigint (nullable)
+// Table: client_calls
+//   id: uuid (not null, default: gen_random_uuid())
+//   client_id: uuid (not null)
+//   call_number: integer (not null)
+//   call_date: date (nullable)
+//   call_link: text (nullable)
+//   csat_score: numeric (nullable)
+//   csat_comment: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
+//   tldv_meeting_id: uuid (nullable)
+// Table: client_health_scores
+//   id: uuid (not null, default: gen_random_uuid())
+//   client_id: uuid (not null)
+//   overall_score: numeric (nullable)
+//   engagement_score: numeric (nullable)
+//   response_time_score: numeric (nullable)
+//   csat_avg: numeric (nullable)
+//   days_since_contact: integer (nullable)
+//   risk_level: text (nullable, default: 'healthy'::text)
+//   calculated_at: timestamp with time zone (nullable, default: now())
 // Table: client_profiles
 //   id: uuid (not null, default: gen_random_uuid())
 //   phone_number: text (not null)
@@ -1029,17 +1134,19 @@ export const Constants = {
 //   conversation_theme: text (nullable)
 //   outcome: text (nullable)
 //   tone: text (nullable)
-//   quality_score: double precision (nullable)
+//   quality_score: numeric (nullable)
 //   message_count: integer (nullable)
 //   embedding: vector (nullable)
 //   conversation_date: date (nullable, default: CURRENT_DATE)
 //   created_at: timestamp with time zone (nullable, default: now())
 //   conversation_id: uuid (nullable)
+//   source_type: text (not null, default: 'conversation'::text)
+//   tldv_meeting_id: uuid (nullable)
 // Table: conversation_finalizers
 //   id: uuid (not null, default: gen_random_uuid())
 //   keyword: text (not null)
 //   is_active: boolean (nullable, default: true)
-//   created_at: timestamp without time zone (nullable, default: now())
+//   created_at: timestamp with time zone (nullable, default: now())
 // Table: conversation_status
 //   phone_number: text (nullable)
 //   contact_name: text (nullable)
@@ -1072,6 +1179,16 @@ export const Constants = {
 //   ai_approval_rate: numeric (nullable)
 //   messages_today: bigint (nullable)
 //   rules_today: bigint (nullable)
+// Table: message_templates
+//   id: uuid (not null, default: gen_random_uuid())
+//   name: text (not null)
+//   category: text (nullable)
+//   content: text (not null)
+//   variables: _text (nullable)
+//   usage_count: integer (nullable, default: 0)
+//   is_active: boolean (nullable, default: true)
+//   created_at: timestamp with time zone (nullable, default: now())
+//   updated_at: timestamp with time zone (nullable, default: now())
 // Table: messages
 //   id: uuid (not null, default: gen_random_uuid())
 //   phone_number: text (nullable)
@@ -1091,56 +1208,8 @@ export const Constants = {
 //   client_id: uuid (not null)
 //   tldv_link: text (nullable)
 //   etapa_negocio: text (nullable)
-//   call_1_date: date (nullable)
-//   call_2_date: date (nullable)
-//   call_3_date: date (nullable)
-//   call_4_date: date (nullable)
-//   call_5_date: date (nullable)
-//   call_6_date: date (nullable)
-//   call_7_date: date (nullable)
-//   call_8_date: date (nullable)
-//   call_9_date: date (nullable)
-//   call_10_date: date (nullable)
-//   call_11_date: date (nullable)
-//   call_12_date: date (nullable)
-//   csat_1: numeric (nullable)
-//   csat_2: numeric (nullable)
-//   csat_3: numeric (nullable)
-//   csat_4: numeric (nullable)
-//   csat_5: numeric (nullable)
-//   csat_6: numeric (nullable)
-//   csat_7: numeric (nullable)
-//   csat_8: numeric (nullable)
-//   csat_9: numeric (nullable)
-//   csat_10: numeric (nullable)
-//   csat_11: numeric (nullable)
-//   csat_12: numeric (nullable)
-//   csat_comment_1: text (nullable)
-//   csat_comment_2: text (nullable)
-//   csat_comment_3: text (nullable)
-//   csat_comment_4: text (nullable)
-//   csat_comment_5: text (nullable)
-//   csat_comment_6: text (nullable)
-//   csat_comment_7: text (nullable)
-//   csat_comment_8: text (nullable)
-//   csat_comment_9: text (nullable)
-//   csat_comment_10: text (nullable)
-//   csat_comment_11: text (nullable)
-//   csat_comment_12: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
-//   call_1_link: text (nullable)
-//   call_2_link: text (nullable)
-//   call_3_link: text (nullable)
-//   call_4_link: text (nullable)
-//   call_5_link: text (nullable)
-//   call_6_link: text (nullable)
-//   call_7_link: text (nullable)
-//   call_8_link: text (nullable)
-//   call_9_link: text (nullable)
-//   call_10_link: text (nullable)
-//   call_11_link: text (nullable)
-//   call_12_link: text (nullable)
 // Table: suggestions
 //   id: uuid (not null, default: gen_random_uuid())
 //   phone_number: text (nullable)
@@ -1170,6 +1239,8 @@ export const Constants = {
 //   meeting_date: timestamp with time zone (nullable)
 //   created_at: timestamp with time zone (nullable, default: now())
 //   client_id: uuid (nullable)
+//   match_status: text (nullable, default: 'matched'::text)
+//   matched_email: text (nullable)
 // Table: training_feedback
 //   id: uuid (not null, default: gen_random_uuid())
 //   feedback_type: text (nullable)
@@ -1182,22 +1253,45 @@ export const Constants = {
 //   reviewed_at: timestamp with time zone (nullable)
 //   reviewed_notes: text (nullable)
 //   created_at: timestamp with time zone (nullable, default: now())
+// Table: webhook_logs
+//   id: uuid (not null, default: gen_random_uuid())
+//   source: text (not null)
+//   event_type: text (nullable)
+//   payload: jsonb (nullable)
+//   processing_status: text (nullable, default: 'received'::text)
+//   error_message: text (nullable)
+//   processing_time_ms: integer (nullable)
+//   created_at: timestamp with time zone (nullable, default: now())
 
 // --- CONSTRAINTS ---
 // Table: ai_prompts
 //   PRIMARY KEY ai_prompts_pkey: PRIMARY KEY (id)
 // Table: autonomous_rules
+//   FOREIGN KEY autonomous_rules_created_by_fkey: FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
 //   PRIMARY KEY autonomous_rules_pkey: PRIMARY KEY (id)
 //   UNIQUE autonomous_rules_rule_name_key: UNIQUE (rule_name)
 // Table: calendar_events
+//   FOREIGN KEY calendar_events_client_id_fkey: FOREIGN KEY (client_id) REFERENCES client_profiles(id)
 //   UNIQUE calendar_events_google_event_id_key: UNIQUE (google_event_id)
 //   PRIMARY KEY calendar_events_pkey: PRIMARY KEY (id)
+// Table: client_calls
+//   CHECK client_calls_call_number_check: CHECK (((call_number >= 1) AND (call_number <= 99)))
+//   FOREIGN KEY client_calls_client_id_fkey: FOREIGN KEY (client_id) REFERENCES client_profiles(id) ON DELETE CASCADE
+//   PRIMARY KEY client_calls_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY client_calls_tldv_meeting_id_fkey: FOREIGN KEY (tldv_meeting_id) REFERENCES tldv_meetings(id) ON DELETE SET NULL
+//   UNIQUE client_calls_unique_per_client: UNIQUE (client_id, call_number)
+// Table: client_health_scores
+//   FOREIGN KEY client_health_scores_client_id_fkey: FOREIGN KEY (client_id) REFERENCES client_profiles(id) ON DELETE CASCADE
+//   UNIQUE client_health_scores_client_id_key: UNIQUE (client_id)
+//   PRIMARY KEY client_health_scores_pkey: PRIMARY KEY (id)
 // Table: client_profiles
 //   UNIQUE client_profiles_phone_number_key: UNIQUE (phone_number)
 //   PRIMARY KEY client_profiles_pkey: PRIMARY KEY (id)
 // Table: conversation_embeddings
 //   FOREIGN KEY conversation_embeddings_conversation_id_fkey: FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 //   PRIMARY KEY conversation_embeddings_pkey: PRIMARY KEY (id)
+//   CHECK conversation_embeddings_source_type_check: CHECK ((source_type = ANY (ARRAY['conversation'::text, 'tldv_transcript'::text])))
+//   FOREIGN KEY conversation_embeddings_tldv_meeting_id_fkey: FOREIGN KEY (tldv_meeting_id) REFERENCES tldv_meetings(id)
 // Table: conversation_finalizers
 //   UNIQUE conversation_finalizers_keyword_key: UNIQUE (keyword)
 //   PRIMARY KEY conversation_finalizers_pkey: PRIMARY KEY (id)
@@ -1205,6 +1299,8 @@ export const Constants = {
 //   FOREIGN KEY conversations_client_id_fkey: FOREIGN KEY (client_id) REFERENCES client_profiles(id) ON DELETE SET NULL
 //   UNIQUE conversations_phone_number_key: UNIQUE (phone_number)
 //   PRIMARY KEY conversations_pkey: PRIMARY KEY (id)
+// Table: message_templates
+//   PRIMARY KEY message_templates_pkey: PRIMARY KEY (id)
 // Table: messages
 //   FOREIGN KEY messages_conversation_id_fkey: FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 //   UNIQUE messages_message_hash_unique: UNIQUE (message_hash)
@@ -1219,90 +1315,125 @@ export const Constants = {
 //   PRIMARY KEY suggestions_pkey: PRIMARY KEY (id)
 // Table: tldv_meetings
 //   FOREIGN KEY tldv_meetings_client_id_fkey: FOREIGN KEY (client_id) REFERENCES client_profiles(id) ON DELETE CASCADE
-//   FOREIGN KEY tldv_meetings_phone_number_fkey: FOREIGN KEY (phone_number) REFERENCES client_profiles(phone_number) ON DELETE SET NULL
+//   CHECK tldv_meetings_match_status_check: CHECK ((match_status = ANY (ARRAY['matched'::text, 'pending_review'::text, 'manually_matched'::text])))
 //   PRIMARY KEY tldv_meetings_pkey: PRIMARY KEY (id)
 //   UNIQUE tldv_meetings_tldv_link_key: UNIQUE (tldv_link)
 // Table: training_feedback
 //   PRIMARY KEY training_feedback_pkey: PRIMARY KEY (id)
+// Table: webhook_logs
+//   PRIMARY KEY webhook_logs_pkey: PRIMARY KEY (id)
 
 // --- ROW LEVEL SECURITY POLICIES ---
 // Table: ai_prompts
 //   Policy "Enable all access for authenticated users on ai_prompts" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 // Table: autonomous_rules
 //   Policy "Enable all access for authenticated users on autonomous_rules" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 // Table: calendar_events
-//   Policy "auth users full access" (ALL, PERMISSIVE) roles={authenticated}
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
+// Table: client_calls
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: true
 //     WITH CHECK: true
 // Table: client_profiles
-//   Policy "auth users full access" (ALL, PERMISSIVE) roles={authenticated}
+//   Policy "auth_only" (ALL, PERMISSIVE) roles={public}
+//     USING: (( SELECT auth.role() AS role) = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: true
 //     WITH CHECK: true
 // Table: conversation_embeddings
 //   Policy "Enable all access for authenticated users on conversation_embed" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
+// Table: conversation_finalizers
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 // Table: conversations
 //   Policy "Enable all access for authenticated users on conversations" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 // Table: messages
 //   Policy "Enable all access for authenticated users on messages" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 // Table: meus_clientes
-//   Policy "auth users full access" (ALL, PERMISSIVE) roles={authenticated}
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: true
 //     WITH CHECK: true
 // Table: suggestions
 //   Policy "Enable all access for authenticated users on suggestions" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 // Table: tldv_meetings
-//   Policy "auth users full access" (ALL, PERMISSIVE) roles={authenticated}
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: true
 //     WITH CHECK: true
 // Table: training_feedback
 //   Policy "Enable all access for authenticated users on training_feedback" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.role() = 'authenticated'::text)
 //     WITH CHECK: (auth.role() = 'authenticated'::text)
+//   Policy "authenticated_full_access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: true
+//     WITH CHECK: true
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION auto_create_client_profile()
 //   CREATE OR REPLACE FUNCTION public.auto_create_client_profile()
 //    RETURNS trigger
 //    LANGUAGE plpgsql
+//    SET search_path TO ''
 //   AS $function$
 //   DECLARE
 //     normalized TEXT;
 //   BEGIN
 //     normalized := split_part(NEW.phone_number, '@', 1);
-//
+//   
 //     IF normalized !~ '^[0-9]{10,15}
-THEN
+ THEN
 //       RETURN NEW;
 //     END IF;
-//
-//     INSERT INTO client_profiles (phone_number, contact_name)
+//   
+//     INSERT INTO public.client_profiles (phone_number, contact_name)
 //     VALUES (normalized, NEW.contact_name)
 //     ON CONFLICT (phone_number) DO UPDATE
-//       SET contact_name = COALESCE(client_profiles.contact_name, EXCLUDED.contact_name),
+//       SET contact_name = COALESCE(public.client_profiles.contact_name, EXCLUDED.contact_name),
 //           updated_at = NOW()
-//     WHERE client_profiles.contact_name IS NULL;
-//
+//     WHERE public.client_profiles.contact_name IS NULL;
+//   
 //     RETURN NEW;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION calculate_business_seconds(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.calculate_business_seconds(start_ts timestamp with time zone, end_ts timestamp with time zone)
 //    RETURNS numeric
 //    LANGUAGE plpgsql
 //    IMMUTABLE
+//    SET search_path TO ''
 //   AS $function$
 //   DECLARE
 //       total_seconds numeric := 0;
@@ -1314,57 +1445,59 @@ THEN
 //       IF start_ts >= end_ts THEN
 //           RETURN 0;
 //       END IF;
-//
+//   
 //       current_day := (start_ts AT TIME ZONE 'America/Sao_Paulo')::date;
 //       end_day := (end_ts AT TIME ZONE 'America/Sao_Paulo')::date;
-//
+//   
 //       WHILE current_day <= end_day LOOP
 //           IF EXTRACT(ISODOW FROM current_day) < 6 THEN
 //               day_start := GREATEST(start_ts, ((current_day + time '09:00:00') AT TIME ZONE 'America/Sao_Paulo'));
 //               day_end := LEAST(end_ts, ((current_day + time '18:00:00') AT TIME ZONE 'America/Sao_Paulo'));
-//
+//               
 //               IF day_start < day_end THEN
 //                   total_seconds := total_seconds + EXTRACT(EPOCH FROM (day_end - day_start));
 //               END IF;
 //           END IF;
-//
+//   
 //           current_day := current_day + 1;
 //       END LOOP;
-//
+//   
 //       RETURN total_seconds;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION get_chart_ai_performance(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.get_chart_ai_performance(p_start_date timestamp with time zone, p_end_date timestamp with time zone)
 //    RETURNS TABLE(date date, approved bigint, edited bigint)
 //    LANGUAGE plpgsql
 //    SECURITY DEFINER
+//    SET search_path TO ''
 //   AS $function$
 //   BEGIN
 //     RETURN QUERY
-//     SELECT
+//     SELECT 
 //       (s.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS date,
 //       COUNT(*) FILTER (WHERE s.was_edited = false) AS approved,
 //       COUNT(*) FILTER (WHERE s.was_edited = true) AS edited
 //     FROM public.suggestions s
-//     WHERE s.sent_text IS NOT NULL
-//       AND s.created_at >= p_start_date
+//     WHERE s.sent_text IS NOT NULL 
+//       AND s.created_at >= p_start_date 
 //       AND s.created_at <= p_end_date
 //     GROUP BY (s.created_at AT TIME ZONE 'America/Sao_Paulo')::date
 //     ORDER BY (s.created_at AT TIME ZONE 'America/Sao_Paulo')::date ASC;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION get_chart_conversations_per_day(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.get_chart_conversations_per_day(p_start_date timestamp with time zone, p_end_date timestamp with time zone)
 //    RETURNS TABLE(date date, count bigint)
 //    LANGUAGE plpgsql
 //    SECURITY DEFINER
+//    SET search_path TO ''
 //   AS $function$
 //   BEGIN
 //     RETURN QUERY
-//     SELECT
+//     SELECT 
 //       (m.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS date,
 //       COUNT(DISTINCT m.phone_number) AS count
 //     FROM public.messages m
@@ -1374,12 +1507,13 @@ THEN
 //     ORDER BY (m.created_at AT TIME ZONE 'America/Sao_Paulo')::date ASC;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION get_dashboard_stats(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.get_dashboard_stats(p_start_date timestamp with time zone, p_end_date timestamp with time zone)
 //    RETURNS TABLE(avg_response_time numeric, active_conversations bigint, pending_suggestions bigint, ai_approval_rate numeric, messages_received bigint, clients_served bigint)
 //    LANGUAGE plpgsql
 //    SECURITY DEFINER
+//    SET search_path TO ''
 //   AS $function$
 //   BEGIN
 //     RETURN QUERY
@@ -1387,78 +1521,170 @@ THEN
 //       (
 //         SELECT COALESCE(AVG(public.calculate_business_seconds(incoming_time, reply_time)), 0)::numeric
 //         FROM (
-//           SELECT
+//           SELECT 
 //             m1.created_at AS incoming_time,
 //             MIN(m2.created_at) AS reply_time
 //           FROM public.messages m1
-//           JOIN public.messages m2
-//             ON m1.phone_number = m2.phone_number
-//             AND m2.sender = 'me'
+//           JOIN public.messages m2 
+//             ON m1.phone_number = m2.phone_number 
+//             AND m2.sender = 'me' 
 //             AND m2.created_at > m1.created_at
-//           WHERE m1.sender != 'me'
+//           WHERE m1.sender != 'me' 
 //             AND m1.created_at >= p_start_date
 //             AND m1.created_at <= p_end_date
 //           GROUP BY m1.id, m1.created_at
 //         ) sub
 //       ) AS avg_response_time,
-//
+//       
 //       (SELECT COUNT(*) FROM public.conversations WHERE manually_closed = false) AS active_conversations,
-//
+//       
 //       (SELECT COUNT(*) FROM public.suggestions WHERE approved_at IS NULL) AS pending_suggestions,
-//
-//       (SELECT
+//       
+//       (SELECT 
 //          COALESCE(
-//            (COUNT(*) FILTER (WHERE was_edited = false)::numeric / NULLIF(COUNT(*), 0)) * 100,
+//            (COUNT(*) FILTER (WHERE was_edited = false)::numeric / NULLIF(COUNT(*), 0)) * 100, 
 //            0
 //          )
-//        FROM public.suggestions
-//        WHERE sent_text IS NOT NULL
-//          AND created_at >= p_start_date
+//        FROM public.suggestions 
+//        WHERE sent_text IS NOT NULL 
+//          AND created_at >= p_start_date 
 //          AND created_at <= p_end_date
 //       ) AS ai_approval_rate,
-//
-//       (SELECT COUNT(*) FROM public.messages
-//        WHERE sender != 'me'
-//          AND created_at >= p_start_date
+//   
+//       (SELECT COUNT(*) FROM public.messages 
+//        WHERE sender != 'me' 
+//          AND created_at >= p_start_date 
 //          AND created_at <= p_end_date
 //       ) AS messages_received,
-//
-//       (SELECT COUNT(DISTINCT phone_number) FROM public.messages
-//        WHERE created_at >= p_start_date
+//   
+//       (SELECT COUNT(DISTINCT phone_number) FROM public.messages 
+//        WHERE created_at >= p_start_date 
 //          AND created_at <= p_end_date
 //       ) AS clients_served;
 //   END;
 //   $function$
-//
+//   
+// FUNCTION increment_usage_count()
+//   CREATE OR REPLACE FUNCTION public.increment_usage_count()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SET search_path TO ''
+//   AS $function$ BEGIN NEW.usage_count = OLD.usage_count + 1; NEW.last_used_at = NOW(); RETURN NEW; END; $function$
+//   
+// FUNCTION match_tldv_to_client(uuid, text[])
+//   CREATE OR REPLACE FUNCTION public.match_tldv_to_client(p_tldv_meeting_id uuid, p_participant_emails text[])
+//    RETURNS uuid
+//    LANGUAGE plpgsql
+//    SET search_path TO ''
+//   AS $function$ DECLARE v_client_id uuid; v_email text; BEGIN FOREACH v_email IN ARRAY p_participant_emails LOOP SELECT id INTO v_client_id FROM public.client_profiles WHERE email = v_email OR v_email = ANY(emails_alternativos) LIMIT 1; IF v_client_id IS NOT NULL THEN UPDATE public.tldv_meetings SET client_id = v_client_id, match_status = 'matched', matched_email = v_email WHERE id = p_tldv_meeting_id; RETURN v_client_id; END IF; END LOOP; UPDATE public.tldv_meetings SET match_status = 'pending_review' WHERE id = p_tldv_meeting_id; RETURN NULL; END; $function$
+//   
+// FUNCTION rematch_tldv_on_email_update()
+//   CREATE OR REPLACE FUNCTION public.rematch_tldv_on_email_update()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SET search_path TO ''
+//   AS $function$ DECLARE v_new_emails text[]; v_email text; BEGIN v_new_emails := ARRAY(SELECT unnest(NEW.emails_alternativos) EXCEPT SELECT unnest(COALESCE(OLD.emails_alternativos, '{}'::text[]))); IF array_length(v_new_emails, 1) > 0 THEN FOREACH v_email IN ARRAY v_new_emails LOOP UPDATE public.tldv_meetings SET client_id = NEW.id, match_status = 'manually_matched', matched_email = v_email WHERE match_status = 'pending_review' AND v_email = ANY(participant_emails); END LOOP; END IF; RETURN NEW; END; $function$
+//   
+// FUNCTION search_conversations(vector, double precision, integer)
+//   CREATE OR REPLACE FUNCTION public.search_conversations(query_embedding vector, match_threshold double precision DEFAULT 0.78, match_count integer DEFAULT 10)
+//    RETURNS TABLE(conversation_id uuid, phone_number text, summary text, similarity double precision)
+//    LANGUAGE plpgsql
+//   AS $function$
+//   BEGIN
+//     RETURN QUERY
+//     SELECT
+//       ce.conversation_id,
+//       ce.phone_number,
+//       ce.conversation_summary,
+//       1 - (ce.embedding <=> query_embedding) AS similarity
+//     FROM public.conversation_embeddings ce
+//     WHERE 1 - (ce.embedding <=> query_embedding) > match_threshold
+//     ORDER BY similarity DESC
+//     LIMIT match_count;
+//   END;
+//   $function$
+//   
+// FUNCTION search_embeddings(vector, text, integer, double precision)
+//   CREATE OR REPLACE FUNCTION public.search_embeddings(query_embedding vector, source_filter text DEFAULT NULL::text, match_count integer DEFAULT 5, min_score double precision DEFAULT 0.5)
+//    RETURNS TABLE(id uuid, conversation_id uuid, tldv_meeting_id uuid, source_type text, conversation_summary text, conversation_theme text, tone text, quality_score numeric, similarity double precision)
+//    LANGUAGE sql
+//    STABLE
+//    SET search_path TO ''
+//   AS $function$ SELECT ce.id, ce.conversation_id, ce.tldv_meeting_id, ce.source_type, ce.conversation_summary, ce.conversation_theme, ce.tone, ce.quality_score, 1 - (ce.embedding <=> query_embedding) AS similarity FROM public.conversation_embeddings ce WHERE ce.embedding IS NOT NULL AND (source_filter IS NULL OR ce.source_type = source_filter) AND 1 - (ce.embedding <=> query_embedding) > min_score ORDER BY ce.embedding <=> query_embedding LIMIT match_count; $function$
+//   
+// FUNCTION set_updated_at()
+//   CREATE OR REPLACE FUNCTION public.set_updated_at()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SET search_path TO ''
+//   AS $function$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $function$
+//   
+// FUNCTION sync_conversation_contact_name()
+//   CREATE OR REPLACE FUNCTION public.sync_conversation_contact_name()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SET search_path TO ''
+//   AS $function$ BEGIN IF NEW.contact_name IS DISTINCT FROM OLD.contact_name THEN UPDATE public.conversations SET contact_name = NEW.contact_name WHERE client_id = NEW.id; END IF; RETURN NEW; END; $function$
+//   
 
 // --- TRIGGERS ---
+// Table: autonomous_rules
+//   trg_updated_at_autonomous_rules: CREATE TRIGGER trg_updated_at_autonomous_rules BEFORE UPDATE ON public.autonomous_rules FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+// Table: client_calls
+//   trg_updated_at_client_calls: CREATE TRIGGER trg_updated_at_client_calls BEFORE UPDATE ON public.client_calls FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+// Table: client_profiles
+//   set_updated_at: CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.client_profiles FOR EACH ROW EXECUTE FUNCTION moddatetime('updated_at')
+//   trg_rematch_tldv_on_email: CREATE TRIGGER trg_rematch_tldv_on_email AFTER UPDATE OF emails_alternativos ON public.client_profiles FOR EACH ROW EXECUTE FUNCTION rematch_tldv_on_email_update()
+//   trg_sync_contact_name: CREATE TRIGGER trg_sync_contact_name AFTER UPDATE OF contact_name ON public.client_profiles FOR EACH ROW EXECUTE FUNCTION sync_conversation_contact_name()
+//   trg_updated_at_client_profiles: CREATE TRIGGER trg_updated_at_client_profiles BEFORE UPDATE ON public.client_profiles FOR EACH ROW EXECUTE FUNCTION set_updated_at()
 // Table: conversations
 //   trg_auto_client_profile: CREATE TRIGGER trg_auto_client_profile AFTER INSERT ON public.conversations FOR EACH ROW EXECUTE FUNCTION auto_create_client_profile()
+//   trg_updated_at_conversations: CREATE TRIGGER trg_updated_at_conversations BEFORE UPDATE ON public.conversations FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+// Table: meus_clientes
+//   trg_updated_at_meus_clientes: CREATE TRIGGER trg_updated_at_meus_clientes BEFORE UPDATE ON public.meus_clientes FOR EACH ROW EXECUTE FUNCTION set_updated_at()
 
 // --- INDEXES ---
 // Table: autonomous_rules
 //   CREATE UNIQUE INDEX autonomous_rules_rule_name_key ON public.autonomous_rules USING btree (rule_name)
+//   CREATE INDEX idx_rules_active_priority ON public.autonomous_rules USING btree (is_active, priority DESC)
+//   CREATE INDEX idx_rules_trigger_patterns ON public.autonomous_rules USING gin (trigger_patterns)
 // Table: calendar_events
 //   CREATE UNIQUE INDEX calendar_events_google_event_id_key ON public.calendar_events USING btree (google_event_id)
-//   CREATE INDEX idx_calendar_events_client ON public.calendar_events USING btree (client_phone)
-//   CREATE INDEX idx_calendar_events_start ON public.calendar_events USING btree (start_at)
+//   CREATE INDEX idx_calendar_client_id ON public.calendar_events USING btree (client_id)
+//   CREATE INDEX idx_calendar_client_phone ON public.calendar_events USING btree (client_phone)
+//   CREATE INDEX idx_calendar_start_at ON public.calendar_events USING btree (start_at)
+// Table: client_calls
+//   CREATE UNIQUE INDEX client_calls_unique_per_client ON public.client_calls USING btree (client_id, call_number)
+//   CREATE INDEX idx_client_calls_client_date ON public.client_calls USING btree (client_id, call_date DESC)
+//   CREATE INDEX idx_client_calls_client_id ON public.client_calls USING btree (client_id)
+//   CREATE INDEX idx_client_calls_date ON public.client_calls USING btree (call_date DESC)
+//   CREATE INDEX idx_client_calls_tldv_meeting_id ON public.client_calls USING btree (tldv_meeting_id)
+// Table: client_health_scores
+//   CREATE UNIQUE INDEX client_health_scores_client_id_key ON public.client_health_scores USING btree (client_id)
 // Table: client_profiles
 //   CREATE UNIQUE INDEX client_profiles_phone_number_key ON public.client_profiles USING btree (phone_number)
+//   CREATE INDEX idx_client_emails_alternativos ON public.client_profiles USING gin (emails_alternativos)
 //   CREATE INDEX idx_client_profiles_phone ON public.client_profiles USING btree (phone_number)
 // Table: conversation_embeddings
-//   CREATE INDEX idx_conversation_embeddings_conversation_id ON public.conversation_embeddings USING btree (conversation_id)
+//   CREATE INDEX idx_embeddings_conversation_id ON public.conversation_embeddings USING btree (conversation_id)
+//   CREATE INDEX idx_embeddings_hnsw_cosine ON public.conversation_embeddings USING hnsw (embedding vector_cosine_ops) WITH (m='16', ef_construction='64')
+//   CREATE INDEX idx_embeddings_phone ON public.conversation_embeddings USING btree (phone_number)
+//   CREATE INDEX idx_embeddings_source_type ON public.conversation_embeddings USING btree (source_type)
+//   CREATE INDEX idx_embeddings_tldv_id ON public.conversation_embeddings USING btree (tldv_meeting_id)
 // Table: conversation_finalizers
 //   CREATE UNIQUE INDEX conversation_finalizers_keyword_key ON public.conversation_finalizers USING btree (keyword)
 // Table: conversations
 //   CREATE UNIQUE INDEX conversations_phone_number_key ON public.conversations USING btree (phone_number)
 //   CREATE UNIQUE INDEX conversations_remote_jid_unique ON public.conversations USING btree (remote_jid) WHERE (remote_jid IS NOT NULL)
 //   CREATE INDEX idx_conversations_client_id ON public.conversations USING btree (client_id)
-//   CREATE INDEX idx_conversations_last_message_at ON public.conversations USING btree (last_message_at DESC)
+//   CREATE INDEX idx_conversations_last_message ON public.conversations USING btree (last_message_at DESC)
+//   CREATE INDEX idx_conversations_manually_closed ON public.conversations USING btree (manually_closed)
 //   CREATE INDEX idx_conversations_phone ON public.conversations USING btree (phone_number)
 // Table: messages
 //   CREATE INDEX idx_messages_conversation_id ON public.messages USING btree (conversation_id)
-//   CREATE INDEX idx_messages_created_at ON public.messages USING btree (created_at)
+//   CREATE INDEX idx_messages_created_at_brin ON public.messages USING brin (created_at) WITH (pages_per_range='128')
 //   CREATE UNIQUE INDEX idx_messages_hash ON public.messages USING btree (message_hash)
+//   CREATE INDEX idx_messages_is_audio ON public.messages USING btree (id) WHERE (is_audio = true)
 //   CREATE INDEX idx_messages_phone_created ON public.messages USING btree (phone_number, created_at DESC)
 //   CREATE INDEX idx_messages_phone_number ON public.messages USING btree (phone_number)
 //   CREATE UNIQUE INDEX messages_message_hash_unique ON public.messages USING btree (message_hash)
@@ -1471,7 +1697,14 @@ THEN
 //   CREATE INDEX idx_suggestions_approved ON public.suggestions USING btree (was_edited, use_for_training) WHERE ((sent_text IS NOT NULL) AND (was_edited = false))
 //   CREATE INDEX idx_suggestions_conversation_id ON public.suggestions USING btree (conversation_id)
 //   CREATE INDEX idx_suggestions_gold_standard ON public.suggestions USING btree (is_gold_standard) WHERE (is_gold_standard = true)
+//   CREATE INDEX idx_suggestions_matched_rule ON public.suggestions USING btree (matched_rule_id)
+//   CREATE INDEX idx_suggestions_status ON public.suggestions USING btree (status)
 // Table: tldv_meetings
-//   CREATE INDEX idx_tldv_meetings_client_id ON public.tldv_meetings USING btree (client_id)
-//   CREATE INDEX idx_tldv_meetings_date ON public.tldv_meetings USING btree (meeting_date DESC)
+//   CREATE INDEX idx_tldv_client_id ON public.tldv_meetings USING btree (client_id)
+//   CREATE INDEX idx_tldv_meeting_date ON public.tldv_meetings USING btree (meeting_date DESC)
+//   CREATE INDEX idx_tldv_phone_number ON public.tldv_meetings USING btree (phone_number)
 //   CREATE UNIQUE INDEX tldv_meetings_tldv_link_key ON public.tldv_meetings USING btree (tldv_link)
+// Table: webhook_logs
+//   CREATE INDEX idx_webhook_logs_created_at ON public.webhook_logs USING brin (created_at)
+//   CREATE INDEX idx_webhook_logs_source ON public.webhook_logs USING btree (source)
+

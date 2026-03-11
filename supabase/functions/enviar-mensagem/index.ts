@@ -2,19 +2,6 @@
  * enviar-mensagem — Substitui o Workflow 3 (n8n)
  *
  * Chamado pelo frontend quando o operador envia/aprova uma mensagem.
- * Fluxo completo (sem dependência de n8n):
- *   1. Valida payload
- *   2. Verifica idempotência (mensagem já enviada?)
- *   3. Analisa edição vs. sugestão original (similarity score)
- *   4. Envia via Evolution API
- *   5. Salva mensagem no DB
- *   6. Atualiza conversa e sugestão
- *   7. Se editada: gera training_feedback para revisão do prompt
- *
- * Env vars necessárias (supabase secrets set):
- *   EVOLUTION_API_URL   — ex: https://skinnysalmon-evolution.cloudfy.cloud
- *   EVOLUTION_API_KEY   — API key da Evolution
- *   EVOLUTION_INSTANCE  — nome da instância, ex: org-prestes
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -26,6 +13,7 @@ const corsHeaders = {
 }
 
 function normalizePhone(phone: string): string {
+  if (!phone) return ''
   return phone.split('@')[0]
 }
 
@@ -46,11 +34,16 @@ function calcSimilarity(text1: string, text2: string): number {
 }
 
 Deno.serve(async (req) => {
+  console.log(`[enviar-mensagem] Recebendo requisição: ${req.method}`)
+  
   if (req.method === 'OPTIONS')
     return new Response('ok', { headers: corsHeaders })
 
   try {
-    const { suggestion_id, final_text, phone_number } = await req.json()
+    const body = await req.json()
+    console.log('[enviar-mensagem] Payload:', JSON.stringify(body))
+    
+    const { suggestion_id, final_text, phone_number } = body
 
     if (!final_text?.trim() || !phone_number) {
       throw new Error('Campos obrigatórios: final_text e phone_number')
@@ -65,6 +58,7 @@ Deno.serve(async (req) => {
       Deno.env.get('EVOLUTION_INSTANCE') ?? 'org-prestes'
 
     if (!EVOLUTION_URL || !EVOLUTION_KEY) {
+      console.error('[enviar-mensagem] Erro: EVOLUTION_API_URL ou EVOLUTION_API_KEY não configurados.')
       throw new Error(
         'Configuração incompleta: EVOLUTION_API_URL e EVOLUTION_API_KEY são obrigatórios',
       )
@@ -78,13 +72,16 @@ Deno.serve(async (req) => {
     // --- 1. Idempotência: verifica se sugestão já foi enviada ---
     let originalText = trimmedText
     if (suggestion_id) {
-      const { data: sugg } = await supabase
+      const { data: sugg, error: suggError } = await supabase
         .from('suggestions')
         .select('suggestion_text, sent_text')
         .eq('id', suggestion_id)
         .maybeSingle()
 
+      if (suggError) console.error('[enviar-mensagem] Erro ao buscar sugestão:', suggError)
+
       if (sugg?.sent_text) {
+        console.log('[enviar-mensagem] Mensagem já enviada anteriormente.')
         return new Response(
           JSON.stringify({
             success: true,
@@ -105,6 +102,7 @@ Deno.serve(async (req) => {
     const approvedAt = new Date().toISOString()
 
     // --- 3. Envia via Evolution API ---
+    console.log(`[enviar-mensagem] Enviando para Evolution API: ${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`)
     const evolutionRes = await fetch(
       `${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`,
       {
@@ -116,6 +114,7 @@ Deno.serve(async (req) => {
 
     if (!evolutionRes.ok) {
       const errorBody = await evolutionRes.text()
+      console.error(`[enviar-mensagem] Erro Evolution API (${evolutionRes.status}):`, errorBody)
       if (suggestion_id) {
         await supabase
           .from('suggestions')
@@ -138,10 +137,12 @@ Deno.serve(async (req) => {
       .select()
       .single()
 
-    if (insertErr) console.error('Erro ao salvar mensagem:', insertErr)
+    if (insertErr) {
+      console.error('[enviar-mensagem] Erro ao salvar mensagem no DB:', insertErr)
+    }
 
     // --- 5. Atualiza conversa ---
-    await supabase
+    const { error: convError } = await supabase
       .from('conversations')
       .update({
         last_message_text: trimmedText,
@@ -151,10 +152,14 @@ Deno.serve(async (req) => {
       .or(
         `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`,
       )
+    
+    if (convError) {
+      console.error('[enviar-mensagem] Erro ao atualizar conversa:', convError)
+    }
 
     // --- 6. Atualiza sugestão ---
     if (suggestion_id) {
-      await supabase
+      const { error: suggUpdError } = await supabase
         .from('suggestions')
         .update({
           sent_text: trimmedText,
@@ -169,6 +174,10 @@ Deno.serve(async (req) => {
           status: 'sent',
         })
         .eq('id', suggestion_id)
+      
+      if (suggUpdError) {
+        console.error('[enviar-mensagem] Erro ao atualizar status da sugestão:', suggUpdError)
+      }
 
       // --- 7. Feedback de treinamento se editada ---
       if (wasEdited) {
@@ -184,12 +193,12 @@ Deno.serve(async (req) => {
             similarity: Math.round(similarity * 100) / 100,
           }),
           status: 'pending',
-        })
+        }).catch(err => console.error('[enviar-mensagem] Erro ao inserir feedback:', err))
       }
     }
 
     console.log(
-      `✅ Mensagem enviada | phone: ${base} | editada: ${wasEdited} | quality: ${qualityRating}`,
+      `✅ [enviar-mensagem] Sucesso | phone: ${base} | editada: ${wasEdited}`,
     )
 
     // Retorna a mensagem inserida para o frontend adicionar no chat
@@ -207,7 +216,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
-    console.error('Erro ao enviar mensagem:', error)
+    console.error('[enviar-mensagem] Erro fatal:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
