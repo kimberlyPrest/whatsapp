@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabase/client'
 export const TIPOS_OPTIONS = [
   'Elite',
   'Scale',
-  'Skip',
+  'skip - pro',
+  'skip - gold',
+  'skip - basic',
   'Rec Onboar',
   'Vendas',
 ] as const

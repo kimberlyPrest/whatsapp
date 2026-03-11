@@ -130,7 +130,9 @@ export function ClientModal({
   const tipoColors: Record<string, string> = {
     Elite: 'bg-purple-100 text-purple-800 border-purple-200',
     Scale: 'bg-blue-100 text-blue-800 border-blue-200',
-    Skip: 'bg-gray-100 text-gray-700 border-gray-200',
+    'skip - pro': 'bg-slate-800 text-white border-slate-900',
+    'skip - gold': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'skip - basic': 'bg-gray-100 text-gray-700 border-gray-200',
     'Rec Onboar': 'bg-green-100 text-green-800 border-green-200',
     Vendas: 'bg-orange-100 text-orange-800 border-orange-200',
   }

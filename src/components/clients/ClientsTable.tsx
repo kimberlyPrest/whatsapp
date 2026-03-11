@@ -13,7 +13,9 @@ interface ClientsTableProps {
 const tipoColors: Record<string, string> = {
   Elite: 'bg-purple-100 text-purple-800',
   Scale: 'bg-blue-100 text-blue-800',
-  Skip: 'bg-gray-100 text-gray-700',
+  'skip - pro': 'bg-slate-800 text-white',
+  'skip - gold': 'bg-yellow-100 text-yellow-800',
+  'skip - basic': 'bg-gray-100 text-gray-700',
   'Rec Onboar': 'bg-green-100 text-green-800',
   Vendas: 'bg-orange-100 text-orange-800',
 }
