@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.1'
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -150,11 +150,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'calendar_events_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "calendar_events_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -197,18 +197,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'client_calls_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "client_calls_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'client_calls_tldv_meeting_id_fkey'
-            columns: ['tldv_meeting_id']
+            foreignKeyName: "client_calls_tldv_meeting_id_fkey"
+            columns: ["tldv_meeting_id"]
             isOneToOne: false
-            referencedRelation: 'tldv_meetings'
-            referencedColumns: ['id']
+            referencedRelation: "tldv_meetings"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -248,11 +248,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'client_health_scores_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "client_health_scores_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: true
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -270,6 +270,7 @@ export type Database = {
           propriedade: boolean
           tags: string[] | null
           tipos: string[] | null
+          tldv_link: string | null
           updated_at: string | null
         }
         Insert: {
@@ -285,6 +286,7 @@ export type Database = {
           propriedade?: boolean
           tags?: string[] | null
           tipos?: string[] | null
+          tldv_link?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -300,6 +302,7 @@ export type Database = {
           propriedade?: boolean
           tags?: string[] | null
           tipos?: string[] | null
+          tldv_link?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -355,18 +358,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'conversation_embeddings_conversation_id_fkey'
-            columns: ['conversation_id']
+            foreignKeyName: "conversation_embeddings_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'conversation_embeddings_tldv_meeting_id_fkey'
-            columns: ['tldv_meeting_id']
+            foreignKeyName: "conversation_embeddings_tldv_meeting_id_fkey"
+            columns: ["tldv_meeting_id"]
             isOneToOne: false
-            referencedRelation: 'tldv_meetings'
-            referencedColumns: ['id']
+            referencedRelation: "tldv_meetings"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -445,11 +448,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'conversations_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "conversations_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -537,11 +540,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'messages_conversation_id_fkey'
-            columns: ['conversation_id']
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -572,11 +575,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'meus_clientes_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "meus_clientes_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: true
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -640,18 +643,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'suggestions_conversation_id_fkey'
-            columns: ['conversation_id']
+            foreignKeyName: "suggestions_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
-            referencedRelation: 'conversations'
-            referencedColumns: ['id']
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'suggestions_matched_rule_id_fkey'
-            columns: ['matched_rule_id']
+            foreignKeyName: "suggestions_matched_rule_id_fkey"
+            columns: ["matched_rule_id"]
             isOneToOne: false
-            referencedRelation: 'autonomous_rules'
-            referencedColumns: ['id']
+            referencedRelation: "autonomous_rules"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -700,11 +703,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'tldv_meetings_client_id_fkey'
-            columns: ['client_id']
+            foreignKeyName: "tldv_meetings_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: 'client_profiles'
-            referencedColumns: ['id']
+            referencedRelation: "client_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -909,33 +912,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -944,23 +947,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -969,23 +972,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -994,36 +997,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -1031,6 +1034,7 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -1126,6 +1130,7 @@ export const Constants = {
 //   next_meeting_at: timestamp with time zone (nullable)
 //   next_meeting_link: text (nullable)
 //   emails_alternativos: _text (nullable, default: '{}'::text[])
+//   tldv_link: text (nullable)
 // Table: conversation_embeddings
 //   id: uuid (not null, default: gen_random_uuid())
 //   phone_number: text (nullable)
@@ -1410,23 +1415,23 @@ export const Constants = {
 //     normalized TEXT;
 //   BEGIN
 //     normalized := split_part(NEW.phone_number, '@', 1);
-//
+//   
 //     IF normalized !~ '^[0-9]{10,15}
-THEN
+ THEN
 //       RETURN NEW;
 //     END IF;
-//
+//   
 //     INSERT INTO public.client_profiles (phone_number, contact_name)
 //     VALUES (normalized, NEW.contact_name)
 //     ON CONFLICT (phone_number) DO UPDATE
 //       SET contact_name = COALESCE(public.client_profiles.contact_name, EXCLUDED.contact_name),
 //           updated_at = NOW()
 //     WHERE public.client_profiles.contact_name IS NULL;
-//
+//   
 //     RETURN NEW;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION calculate_business_seconds(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.calculate_business_seconds(start_ts timestamp with time zone, end_ts timestamp with time zone)
 //    RETURNS numeric
@@ -1444,27 +1449,27 @@ THEN
 //       IF start_ts >= end_ts THEN
 //           RETURN 0;
 //       END IF;
-//
+//   
 //       current_day := (start_ts AT TIME ZONE 'America/Sao_Paulo')::date;
 //       end_day := (end_ts AT TIME ZONE 'America/Sao_Paulo')::date;
-//
+//   
 //       WHILE current_day <= end_day LOOP
 //           IF EXTRACT(ISODOW FROM current_day) < 6 THEN
 //               day_start := GREATEST(start_ts, ((current_day + time '09:00:00') AT TIME ZONE 'America/Sao_Paulo'));
 //               day_end := LEAST(end_ts, ((current_day + time '18:00:00') AT TIME ZONE 'America/Sao_Paulo'));
-//
+//               
 //               IF day_start < day_end THEN
 //                   total_seconds := total_seconds + EXTRACT(EPOCH FROM (day_end - day_start));
 //               END IF;
 //           END IF;
-//
+//   
 //           current_day := current_day + 1;
 //       END LOOP;
-//
+//   
 //       RETURN total_seconds;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION get_chart_ai_performance(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.get_chart_ai_performance(p_start_date timestamp with time zone, p_end_date timestamp with time zone)
 //    RETURNS TABLE(date date, approved bigint, edited bigint)
@@ -1474,19 +1479,19 @@ THEN
 //   AS $function$
 //   BEGIN
 //     RETURN QUERY
-//     SELECT
+//     SELECT 
 //       (s.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS date,
 //       COUNT(*) FILTER (WHERE s.was_edited = false) AS approved,
 //       COUNT(*) FILTER (WHERE s.was_edited = true) AS edited
 //     FROM public.suggestions s
-//     WHERE s.sent_text IS NOT NULL
-//       AND s.created_at >= p_start_date
+//     WHERE s.sent_text IS NOT NULL 
+//       AND s.created_at >= p_start_date 
 //       AND s.created_at <= p_end_date
 //     GROUP BY (s.created_at AT TIME ZONE 'America/Sao_Paulo')::date
 //     ORDER BY (s.created_at AT TIME ZONE 'America/Sao_Paulo')::date ASC;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION get_chart_conversations_per_day(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.get_chart_conversations_per_day(p_start_date timestamp with time zone, p_end_date timestamp with time zone)
 //    RETURNS TABLE(date date, count bigint)
@@ -1496,7 +1501,7 @@ THEN
 //   AS $function$
 //   BEGIN
 //     RETURN QUERY
-//     SELECT
+//     SELECT 
 //       (m.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS date,
 //       COUNT(DISTINCT m.phone_number) AS count
 //     FROM public.messages m
@@ -1506,7 +1511,7 @@ THEN
 //     ORDER BY (m.created_at AT TIME ZONE 'America/Sao_Paulo')::date ASC;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION get_dashboard_stats(timestamp with time zone, timestamp with time zone)
 //   CREATE OR REPLACE FUNCTION public.get_dashboard_stats(p_start_date timestamp with time zone, p_end_date timestamp with time zone)
 //    RETURNS TABLE(avg_response_time numeric, active_conversations bigint, pending_suggestions bigint, ai_approval_rate numeric, messages_received bigint, clients_served bigint)
@@ -1520,70 +1525,112 @@ THEN
 //       (
 //         SELECT COALESCE(AVG(public.calculate_business_seconds(incoming_time, reply_time)), 0)::numeric
 //         FROM (
-//           SELECT
+//           SELECT 
 //             m1.created_at AS incoming_time,
 //             MIN(m2.created_at) AS reply_time
 //           FROM public.messages m1
-//           JOIN public.messages m2
-//             ON m1.phone_number = m2.phone_number
-//             AND m2.sender = 'me'
+//           JOIN public.messages m2 
+//             ON m1.phone_number = m2.phone_number 
+//             AND m2.sender = 'me' 
 //             AND m2.created_at > m1.created_at
-//           WHERE m1.sender != 'me'
+//           WHERE m1.sender != 'me' 
 //             AND m1.created_at >= p_start_date
 //             AND m1.created_at <= p_end_date
 //           GROUP BY m1.id, m1.created_at
 //         ) sub
 //       ) AS avg_response_time,
-//
+//       
 //       (SELECT COUNT(*) FROM public.conversations WHERE manually_closed = false) AS active_conversations,
-//
+//       
 //       (SELECT COUNT(*) FROM public.suggestions WHERE approved_at IS NULL) AS pending_suggestions,
-//
-//       (SELECT
+//       
+//       (SELECT 
 //          COALESCE(
-//            (COUNT(*) FILTER (WHERE was_edited = false)::numeric / NULLIF(COUNT(*), 0)) * 100,
+//            (COUNT(*) FILTER (WHERE was_edited = false)::numeric / NULLIF(COUNT(*), 0)) * 100, 
 //            0
 //          )
-//        FROM public.suggestions
-//        WHERE sent_text IS NOT NULL
-//          AND created_at >= p_start_date
+//        FROM public.suggestions 
+//        WHERE sent_text IS NOT NULL 
+//          AND created_at >= p_start_date 
 //          AND created_at <= p_end_date
 //       ) AS ai_approval_rate,
-//
-//       (SELECT COUNT(*) FROM public.messages
-//        WHERE sender != 'me'
-//          AND created_at >= p_start_date
+//   
+//       (SELECT COUNT(*) FROM public.messages 
+//        WHERE sender != 'me' 
+//          AND created_at >= p_start_date 
 //          AND created_at <= p_end_date
 //       ) AS messages_received,
-//
-//       (SELECT COUNT(DISTINCT phone_number) FROM public.messages
-//        WHERE created_at >= p_start_date
+//   
+//       (SELECT COUNT(DISTINCT phone_number) FROM public.messages 
+//        WHERE created_at >= p_start_date 
 //          AND created_at <= p_end_date
 //       ) AS clients_served;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION increment_usage_count()
 //   CREATE OR REPLACE FUNCTION public.increment_usage_count()
 //    RETURNS trigger
 //    LANGUAGE plpgsql
 //    SET search_path TO ''
 //   AS $function$ BEGIN NEW.usage_count = OLD.usage_count + 1; NEW.last_used_at = NOW(); RETURN NEW; END; $function$
-//
+//   
 // FUNCTION match_tldv_to_client(uuid, text[])
 //   CREATE OR REPLACE FUNCTION public.match_tldv_to_client(p_tldv_meeting_id uuid, p_participant_emails text[])
 //    RETURNS uuid
 //    LANGUAGE plpgsql
 //    SET search_path TO ''
-//   AS $function$ DECLARE v_client_id uuid; v_email text; BEGIN FOREACH v_email IN ARRAY p_participant_emails LOOP SELECT id INTO v_client_id FROM public.client_profiles WHERE email = v_email OR v_email = ANY(emails_alternativos) LIMIT 1; IF v_client_id IS NOT NULL THEN UPDATE public.tldv_meetings SET client_id = v_client_id, match_status = 'matched', matched_email = v_email WHERE id = p_tldv_meeting_id; RETURN v_client_id; END IF; END LOOP; UPDATE public.tldv_meetings SET match_status = 'pending_review' WHERE id = p_tldv_meeting_id; RETURN NULL; END; $function$
-//
+//   AS $function$ 
+//   DECLARE 
+//     v_client_id uuid; 
+//     v_phone_number text;
+//     v_email text; 
+//     v_tldv_link text;
+//   BEGIN 
+//     FOREACH v_email IN ARRAY p_participant_emails LOOP 
+//       -- Procura case-insensitive no email principal ou emails alternativos, sem filtrar por propriedade
+//       SELECT id, phone_number INTO v_client_id, v_phone_number
+//       FROM public.client_profiles 
+//       WHERE LOWER(email) = LOWER(v_email) 
+//          OR LOWER(v_email) = ANY(SELECT LOWER(e) FROM unnest(COALESCE(emails_alternativos, '{}'::text[])) e)
+//       LIMIT 1; 
+//   
+//       IF v_client_id IS NOT NULL THEN 
+//         SELECT tldv_link INTO v_tldv_link FROM public.tldv_meetings WHERE id = p_tldv_meeting_id;
+//         
+//         -- Atualiza tldv_meetings com o ID, telefone e status
+//         UPDATE public.tldv_meetings 
+//         SET client_id = v_client_id, 
+//             phone_number = v_phone_number,
+//             match_status = 'matched', 
+//             matched_email = v_email 
+//         WHERE id = p_tldv_meeting_id; 
+//         
+//         -- Atualiza o tldv_link no perfil do cliente
+//         UPDATE public.client_profiles
+//         SET tldv_link = v_tldv_link, updated_at = NOW()
+//         WHERE id = v_client_id;
+//         
+//         RETURN v_client_id; 
+//       END IF; 
+//     END LOOP; 
+//   
+//     -- Se não encontrar nenhum match
+//     UPDATE public.tldv_meetings 
+//     SET match_status = 'pending_review', client_id = NULL, phone_number = NULL, matched_email = NULL 
+//     WHERE id = p_tldv_meeting_id; 
+//     
+//     RETURN NULL; 
+//   END; 
+//   $function$
+//   
 // FUNCTION rematch_tldv_on_email_update()
 //   CREATE OR REPLACE FUNCTION public.rematch_tldv_on_email_update()
 //    RETURNS trigger
 //    LANGUAGE plpgsql
 //    SET search_path TO ''
 //   AS $function$ DECLARE v_new_emails text[]; v_email text; BEGIN v_new_emails := ARRAY(SELECT unnest(NEW.emails_alternativos) EXCEPT SELECT unnest(COALESCE(OLD.emails_alternativos, '{}'::text[]))); IF array_length(v_new_emails, 1) > 0 THEN FOREACH v_email IN ARRAY v_new_emails LOOP UPDATE public.tldv_meetings SET client_id = NEW.id, match_status = 'manually_matched', matched_email = v_email WHERE match_status = 'pending_review' AND v_email = ANY(participant_emails); END LOOP; END IF; RETURN NEW; END; $function$
-//
+//   
 // FUNCTION search_conversations(vector, double precision, integer)
 //   CREATE OR REPLACE FUNCTION public.search_conversations(query_embedding vector, match_threshold double precision DEFAULT 0.78, match_count integer DEFAULT 10)
 //    RETURNS TABLE(conversation_id uuid, phone_number text, summary text, similarity double precision)
@@ -1602,7 +1649,7 @@ THEN
 //     LIMIT match_count;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION search_embeddings(vector, text, integer, double precision)
 //   CREATE OR REPLACE FUNCTION public.search_embeddings(query_embedding vector, source_filter text DEFAULT NULL::text, match_count integer DEFAULT 5, min_score double precision DEFAULT 0.5)
 //    RETURNS TABLE(id uuid, conversation_id uuid, tldv_meeting_id uuid, source_type text, conversation_summary text, conversation_theme text, tone text, quality_score numeric, similarity double precision)
@@ -1610,21 +1657,21 @@ THEN
 //    STABLE
 //    SET search_path TO ''
 //   AS $function$ SELECT ce.id, ce.conversation_id, ce.tldv_meeting_id, ce.source_type, ce.conversation_summary, ce.conversation_theme, ce.tone, ce.quality_score, 1 - (ce.embedding <=> query_embedding) AS similarity FROM public.conversation_embeddings ce WHERE ce.embedding IS NOT NULL AND (source_filter IS NULL OR ce.source_type = source_filter) AND 1 - (ce.embedding <=> query_embedding) > min_score ORDER BY ce.embedding <=> query_embedding LIMIT match_count; $function$
-//
+//   
 // FUNCTION set_updated_at()
 //   CREATE OR REPLACE FUNCTION public.set_updated_at()
 //    RETURNS trigger
 //    LANGUAGE plpgsql
 //    SET search_path TO ''
 //   AS $function$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $function$
-//
+//   
 // FUNCTION sync_conversation_contact_name()
 //   CREATE OR REPLACE FUNCTION public.sync_conversation_contact_name()
 //    RETURNS trigger
 //    LANGUAGE plpgsql
 //    SET search_path TO ''
 //   AS $function$ BEGIN IF NEW.contact_name IS DISTINCT FROM OLD.contact_name THEN UPDATE public.conversations SET contact_name = NEW.contact_name WHERE client_id = NEW.id; END IF; RETURN NEW; END; $function$
-//
+//   
 
 // --- TRIGGERS ---
 // Table: autonomous_rules
@@ -1706,3 +1753,4 @@ THEN
 // Table: webhook_logs
 //   CREATE INDEX idx_webhook_logs_created_at ON public.webhook_logs USING brin (created_at)
 //   CREATE INDEX idx_webhook_logs_source ON public.webhook_logs USING btree (source)
+
