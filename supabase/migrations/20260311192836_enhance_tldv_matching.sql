@@ -1,3 +1,5 @@
+ALTER TABLE public.client_profiles ADD COLUMN IF NOT EXISTS tldv_link TEXT;
+
 CREATE OR REPLACE FUNCTION public.match_tldv_to_client(p_tldv_meeting_id uuid, p_participant_emails text[])
  RETURNS uuid
  LANGUAGE plpgsql
