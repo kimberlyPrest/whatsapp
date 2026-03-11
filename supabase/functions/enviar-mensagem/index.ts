@@ -35,14 +35,14 @@ function calcSimilarity(text1: string, text2: string): number {
 
 Deno.serve(async (req) => {
   console.log(`[enviar-mensagem] Recebendo requisição: ${req.method}`)
-
+  
   if (req.method === 'OPTIONS')
     return new Response('ok', { headers: corsHeaders })
 
   try {
     const body = await req.json()
     console.log('[enviar-mensagem] Payload:', JSON.stringify(body))
-
+    
     const { suggestion_id, final_text, phone_number } = body
 
     if (!final_text?.trim() || !phone_number) {
@@ -58,9 +58,7 @@ Deno.serve(async (req) => {
       Deno.env.get('EVOLUTION_INSTANCE') ?? 'org-prestes'
 
     if (!EVOLUTION_URL || !EVOLUTION_KEY) {
-      console.error(
-        '[enviar-mensagem] Erro: EVOLUTION_API_URL ou EVOLUTION_API_KEY não configurados.',
-      )
+      console.error('[enviar-mensagem] Erro: EVOLUTION_API_URL ou EVOLUTION_API_KEY não configurados.')
       throw new Error(
         'Configuração incompleta: EVOLUTION_API_URL e EVOLUTION_API_KEY são obrigatórios',
       )
@@ -80,8 +78,7 @@ Deno.serve(async (req) => {
         .eq('id', suggestion_id)
         .maybeSingle()
 
-      if (suggError)
-        console.error('[enviar-mensagem] Erro ao buscar sugestão:', suggError)
+      if (suggError) console.error('[enviar-mensagem] Erro ao buscar sugestão:', suggError)
 
       if (sugg?.sent_text) {
         console.log('[enviar-mensagem] Mensagem já enviada anteriormente.')
@@ -105,9 +102,7 @@ Deno.serve(async (req) => {
     const approvedAt = new Date().toISOString()
 
     // --- 3. Envia via Evolution API ---
-    console.log(
-      `[enviar-mensagem] Enviando para Evolution API: ${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`,
-    )
+    console.log(`[enviar-mensagem] Enviando para Evolution API: ${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`)
     const evolutionRes = await fetch(
       `${EVOLUTION_URL}/message/sendText/${EVOLUTION_INSTANCE}`,
       {
@@ -119,10 +114,7 @@ Deno.serve(async (req) => {
 
     if (!evolutionRes.ok) {
       const errorBody = await evolutionRes.text()
-      console.error(
-        `[enviar-mensagem] Erro Evolution API (${evolutionRes.status}):`,
-        errorBody,
-      )
+      console.error(`[enviar-mensagem] Erro Evolution API (${evolutionRes.status}):`, errorBody)
       if (suggestion_id) {
         await supabase
           .from('suggestions')
@@ -146,10 +138,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (insertErr) {
-      console.error(
-        '[enviar-mensagem] Erro ao salvar mensagem no DB:',
-        insertErr,
-      )
+      console.error('[enviar-mensagem] Erro ao salvar mensagem no DB:', insertErr)
     }
 
     // --- 5. Atualiza conversa ---
@@ -163,7 +152,7 @@ Deno.serve(async (req) => {
       .or(
         `phone_number.eq.${base},phone_number.eq.${base}@s.whatsapp.net,phone_number.eq.${base}@c.us`,
       )
-
+    
     if (convError) {
       console.error('[enviar-mensagem] Erro ao atualizar conversa:', convError)
     }
@@ -185,34 +174,26 @@ Deno.serve(async (req) => {
           status: 'sent',
         })
         .eq('id', suggestion_id)
-
+      
       if (suggUpdError) {
-        console.error(
-          '[enviar-mensagem] Erro ao atualizar status da sugestão:',
-          suggUpdError,
-        )
+        console.error('[enviar-mensagem] Erro ao atualizar status da sugestão:', suggUpdError)
       }
 
       // --- 7. Feedback de treinamento se editada ---
       if (wasEdited) {
-        await supabase
-          .from('training_feedback')
-          .insert({
-            feedback_type: 'prompt_update',
-            title: 'Edição de sugestão IA',
-            description: `Atendente alterou sugestão para ${base} (similaridade: ${Math.round(similarity * 100)}%)`,
-            current_value: originalText,
-            suggested_value: trimmedText,
-            evidence: JSON.stringify({
-              suggestion_id,
-              phone_number: base,
-              similarity: Math.round(similarity * 100) / 100,
-            }),
-            status: 'pending',
-          })
-          .catch((err) =>
-            console.error('[enviar-mensagem] Erro ao inserir feedback:', err),
-          )
+        await supabase.from('training_feedback').insert({
+          feedback_type: 'prompt_update',
+          title: 'Edição de sugestão IA',
+          description: `Atendente alterou sugestão para ${base} (similaridade: ${Math.round(similarity * 100)}%)`,
+          current_value: originalText,
+          suggested_value: trimmedText,
+          evidence: JSON.stringify({
+            suggestion_id,
+            phone_number: base,
+            similarity: Math.round(similarity * 100) / 100,
+          }),
+          status: 'pending',
+        }).catch(err => console.error('[enviar-mensagem] Erro ao inserir feedback:', err))
       }
     }
 
