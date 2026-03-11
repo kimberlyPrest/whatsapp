@@ -1,7 +1,8 @@
 /**
  * sync-tldv.ts
  *
- * Versão Final Turbo: Match por Email, Nome Completo, Domínio e PRIMEIRO NOME (se único).
+ * Versão Final Turbo: Match por Email (primário e alternativos), Nome Completo, Domínio e PRIMEIRO NOME (se único).
+ * Não há mais filtro por propriedade=eq.true.
  */
 
 const SUPABASE_URL =
@@ -47,8 +48,10 @@ const GENERIC_DOMAINS = new Set([
 
 async function main() {
   console.log('📦 Carregando dados...')
+
+  // Removemos o filtro de propriedade=eq.true e adicionamos emails_alternativos
   const profilesRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/client_profiles?select=id,contact_name,email&propriedade=eq.true`,
+    `${SUPABASE_URL}/rest/v1/client_profiles?select=id,contact_name,email,emails_alternativos`,
     { headers: SUPABASE_HEADERS },
   )
   const profiles: any[] = await profilesRes.json()
@@ -66,6 +69,17 @@ async function main() {
       if (dom && !GENERIC_DOMAINS.has(dom))
         domainMap.set(dom, domainMap.has(dom) ? 'multiple' : p.id)
     }
+
+    if (p.emails_alternativos && Array.isArray(p.emails_alternativos)) {
+      for (const alt of p.emails_alternativos) {
+        const normEmail = normalize(alt)
+        emailMap.set(normEmail, p.id)
+        const dom = alt.split('@')[1]?.toLowerCase()
+        if (dom && !GENERIC_DOMAINS.has(dom))
+          domainMap.set(dom, domainMap.has(dom) ? 'multiple' : p.id)
+      }
+    }
+
     if (p.contact_name) {
       const normName = normalize(p.contact_name)
       nameMap.set(normName, p.id)
@@ -184,7 +198,9 @@ async function main() {
     }
   }
 
-  console.log(`✅ Sincronização concluída: ${count} clientes atualizados.`)
+  console.log(
+    `✅ Sincronização concluída: ${count} clientes atualizados em meus_clientes.`,
+  )
   console.log(
     `🔍 Total de ${profileToMeetings.size} clientes vinculados a reuniões.`,
   )

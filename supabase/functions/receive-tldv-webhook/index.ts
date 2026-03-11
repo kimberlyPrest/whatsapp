@@ -4,9 +4,8 @@
  * Recebe o webhook do TL.DV quando uma reunião termina.
  * Fluxo:
  *   1. Extrai dados da reunião (título, link, transcrição, emails, data)
- *   2. Para cada email dos participantes, tenta encontrar um client_profile
- *   3. Insere em tldv_meetings
- *   4. Atualiza client_profiles.tldv_link com o link mais recente
+ *   2. Insere em tldv_meetings
+ *   3. Invoca function 'match_tldv_to_client' no DB para vincular cliente
  *
  * URL para configurar no TL.DV:
  *   https://lasmxppjkfpypotnweyj.supabase.co/functions/v1/receive-tldv-webhook
@@ -91,48 +90,45 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // Busca client_profile pelo email dos participantes
-    let linkedClientId: string | null = null
-    let linkedPhoneNumber: string | null = null
-
-    if (participantEmails.length > 0) {
-      const { data: matchedProfile } = await supabase
-        .from('client_profiles')
-        .select('id, phone_number')
-        .in('email', participantEmails)
-        .limit(1)
-        .maybeSingle()
-
-      if (matchedProfile) {
-        linkedClientId = matchedProfile.id
-        linkedPhoneNumber = matchedProfile.phone_number
-      }
-    }
-
-    // Insere reunião
+    // Insere reunião com status pending_review e client nulo (match será feito via db)
     const { data: meeting, error: meetingErr } = await supabase
       .from('tldv_meetings')
       .insert({
-        client_id: linkedClientId,
-        phone_number: linkedPhoneNumber,
         meeting_title: meetingTitle,
         tldv_link: tldvLink,
         transcript: transcript || null,
         summary: summary || null,
         participant_emails: participantEmails,
         meeting_date: meetingDate,
+        match_status: 'pending_review',
       })
       .select()
       .single()
 
     if (meetingErr) throw meetingErr
 
-    // Atualiza tldv_link no perfil do cliente (mantém sempre o mais recente)
-    if (linkedPhoneNumber) {
-      await supabase
-        .from('client_profiles')
-        .update({ tldv_link: tldvLink, updated_at: new Date().toISOString() })
-        .eq('phone_number', linkedPhoneNumber)
+    let linkedClientId: string | null = null
+    let linkedPhoneNumber: string | null = null
+
+    // Realiza o match de forma síncrona chamando o DB rpc
+    if (participantEmails.length > 0) {
+      const { data: matchedId, error: matchErr } = await supabase.rpc(
+        'match_tldv_to_client',
+        {
+          p_tldv_meeting_id: meeting.id,
+          p_participant_emails: participantEmails,
+        },
+      )
+
+      if (!matchErr && matchedId) {
+        linkedClientId = matchedId
+        const { data: cData } = await supabase
+          .from('client_profiles')
+          .select('phone_number')
+          .eq('id', matchedId)
+          .maybeSingle()
+        if (cData) linkedPhoneNumber = cData.phone_number
+      }
     }
 
     console.log(
@@ -144,10 +140,11 @@ Deno.serve(async (req) => {
         success: true,
         meeting_id: meeting.id,
         linked_phone: linkedPhoneNumber,
+        linked_client_id: linkedClientId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao processar webhook TL.DV:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
